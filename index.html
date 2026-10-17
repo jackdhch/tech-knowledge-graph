@@ -1,0 +1,1505 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>物联网知识图谱</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700&family=Noto+Serif+SC:wght@700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* 布局：左边可拖拽缩放的图，右边说明栏；手机上上下叠放。颜色＝领域，形状＝分级，填充＝了解程度 */
+:root{
+  --bg:#eef2f1; --panel:#ffffff; --fg:#1b2828; --muted:#5d6e6c; --line:#c3cfcc; --star:#d19a00;
+  --iot:#2c7a57; --wireless:#2865a8; --embedded:#b8621a; --netsec:#9c3866;
+  --uav:#5b4fb0; --ai:#16858a; --dev:#7a6838; --mech:#52677d; --cs:#c0442f;
+  --f-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  --f-disp:"Noto Serif SC","Songti SC",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111a19; --panel:#172322; --fg:#e2ebe9; --muted:#93a4a2; --line:#2c3b39; --star:#f2c443;
+  --iot:#5cc497; --wireless:#6ea7e4; --embedded:#e69a57; --netsec:#e07aa6;
+  --uav:#a49be8; --ai:#58cdd2; --dev:#c9b37c; --mech:#a3b6ca; --cs:#f08a74; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111a19; --panel:#172322; --fg:#e2ebe9; --muted:#93a4a2; --line:#2c3b39; --star:#f2c443;
+  --iot:#5cc497; --wireless:#6ea7e4; --embedded:#e69a57; --netsec:#e07aa6;
+  --uav:#a49be8; --ai:#58cdd2; --dev:#c9b37c; --mech:#a3b6ca; --cs:#f08a74; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.6}
+.app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 400px}
+.stage{position:relative;min-width:0;overflow:hidden}
+svg#g{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+.legend{position:absolute;top:12px;left:max(16px,env(safe-area-inset-left,0px));right:16px;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);pointer-events:none}
+.legend div{display:flex;flex-wrap:wrap;gap:4px 14px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:50%;background:var(--c);border:2px solid var(--c);box-sizing:border-box}
+.legend i.k0{background:var(--panel)}
+.legend i.k1{background:color-mix(in srgb,var(--c) 30%,var(--panel))}
+.legend i.ring{background:none;border:2.5px solid var(--star);width:14px;height:14px}
+.legend i.sq{border-radius:2px;background:none}
+.legend i.big{width:16px;height:16px;background:none}
+.legend i.ci{background:none}
+.hint{position:absolute;bottom:12px;left:max(16px,env(safe-area-inset-left,0px));font-size:12px;color:var(--muted);pointer-events:none}
+aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;gap:20px;
+  padding-block:20px;padding-left:20px;padding-right:max(20px,env(safe-area-inset-right,0px))}
+h1{font-family:var(--f-disp);font-size:22px;margin:0;text-wrap:balance;letter-spacing:.02em}
+.intro{margin:6px 0 0;color:var(--muted);font-size:13px}
+.intro b{color:var(--fg);font-weight:600}
+.lbl{font-size:11px;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.penbar{position:sticky;top:-20px;z-index:2;background:var(--panel);margin-top:-20px;padding-block:14px 10px;border-bottom:1px solid var(--line)}
+.penbar .seg button[data-m="k1"][aria-pressed="true"]{background:color-mix(in srgb,var(--fg) 55%,var(--panel))}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;font:inherit;font-size:13px;padding:7px 4px;border:none;background:none;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--panel);font-weight:600}
+.card .seg{margin-top:10px}
+.card .seg button[aria-pressed="true"]{background:var(--c);color:var(--panel)}
+.card h2{font-size:18px;margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:600;color:var(--c);border:1px solid var(--c);border-radius:999px;padding:0 8px;line-height:18px}
+.spec{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin:0 0 6px}
+.card p.d{margin:0}
+.rel{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.rel li{color:var(--muted)}
+.rel b{color:var(--fg);font-weight:600}
+.grp+.grp{margin-top:12px}
+.grp h3{font-size:13px;font-weight:600;margin:0 0 6px}
+details.dom{border-top:1px solid var(--line);padding-block:8px}
+details.dom summary{cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600;list-style:none}
+details.dom summary::-webkit-details-marker{display:none}
+details.dom summary::before{content:"▸";color:var(--muted);font-size:12px;transition:transform .15s}
+details.dom[open] summary::before{transform:rotate(90deg)}
+details.dom summary i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+details.dom summary small{margin-left:auto;font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
+.tools{display:flex;flex-wrap:wrap;gap:4px 12px;margin:8px 0}
+.tools button,.linkbtn{font:inherit;font-size:12px;background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:13px;background:none;color:var(--fg);border:1.5px solid var(--c);border-radius:999px;padding:1px 10px;cursor:pointer}
+.chip.thing{border-radius:5px}
+.chip.k1{background:color-mix(in srgb,var(--c) 22%,transparent)}
+.chip.k2{background:var(--c);color:var(--panel)}
+.chip.mid{font-weight:700}
+.chip:hover{box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 30%,transparent)}
+.empty{color:var(--muted);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button.btn{font:inherit;font-weight:600;border-radius:8px;padding:7px 12px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+button.btn.pri{background:var(--fg);color:var(--panel);border-color:var(--fg)}
+button.btn[aria-pressed="true"]{border-color:var(--star);background:color-mix(in srgb,var(--star) 18%,var(--panel))}
+button.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,summary:focus-visible{outline:2px solid var(--wireless);outline-offset:2px}
+.status{font-size:13px;color:var(--muted);margin:8px 0 0;min-height:1.6em}
+.note{font-size:12px;color:var(--muted);margin:6px 0 0}
+#find{display:flex;gap:8px}
+#q{flex:1;min-width:0;font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+#q:focus-visible{outline:2px solid var(--wireless);outline-offset:1px}
+#hits{margin-top:8px}
+.foot{margin-top:auto;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:12px}
+.foot div{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.foot button{font:inherit;font-size:12px;background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+.foot button.armed{color:var(--cs);font-weight:600}
+/* 图里的元素 */
+.l{stroke:var(--line);stroke-width:1.5}
+.l.cross{stroke:var(--muted);stroke-dasharray:4 4;opacity:.55;stroke-width:1}
+.n{cursor:pointer}
+.n .dot{fill:var(--panel);stroke:var(--c);stroke-width:2.5}
+.n.k1 .dot{fill:color-mix(in srgb,var(--c) 30%,var(--panel))}
+.n.k2 .dot{fill:var(--c)}
+.n.domain .dot{stroke-width:4}
+.n.focus .dot{stroke:var(--fg);stroke-width:3}
+.n .halo{fill:none;stroke:var(--star);stroke-width:3.5;opacity:0}
+.n.star .halo{opacity:1}
+.n text{fill:var(--fg);font-size:12px;paint-order:stroke;stroke:var(--bg);stroke-width:4px;stroke-linejoin:round;pointer-events:none}
+.n.asked text{font-weight:700;font-size:14px}
+.n.domain text{font-weight:700;font-size:14px;letter-spacing:.04em}
+.n.cold{opacity:.3}
+.l.cold{opacity:.15}
+.n.busy .halo{opacity:1;stroke:var(--fg);stroke-width:2;stroke-dasharray:3 3;animation:spin 1.2s linear infinite}
+@keyframes spin{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:reduce){.n.busy .halo{animation:none}}
+@media (max-width:760px){
+  .app{grid-template-columns:1fr;grid-template-rows:62vh auto;height:auto}
+  aside{border-left:none;border-top:1px solid var(--line);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+}
+</style>
+
+<div class="app">
+  <div class="stage" id="stage">
+    <svg id="g" aria-label="知识图谱"></svg>
+    <div class="legend" id="legend"></div>
+    <div class="hint">拖动节点或空白处 · 滚轮/双指缩放</div>
+  </div>
+  <aside>
+    <section class="penbar">
+      <p class="lbl">笔：选好后点图上的节点或目录里的词，点一下就标上；同一支笔再点一次＝取消</p>
+      <div class="seg" id="mode">
+        <button data-m="view">只看说明</button><button data-m="k1">◐ 听说过</button><button data-m="k2">● 熟悉</button><button data-m="star">★ 关注</button><button data-m="clear">清除</button>
+      </div>
+    </section>
+    <div>
+      <h1>物联网知识图谱</h1>
+      <p class="intro"><b>LoRa</b> 和 <b>NFC</b> 属于无线通信，<b>ESP32</b> 属于嵌入式（单片机），<b>抓包</b> 属于网络分析与安全。从这四个词出发，把你听说过的、熟悉的、想深入的概念都标出来。</p>
+    </div>
+    <section>
+      <p class="lbl">找一个词（图里没有的，可以让 Claude 放到合适位置）</p>
+      <form id="find"><input id="q" type="search" placeholder="比如：Zigbee、卡尔曼滤波、有限元" autocomplete="off"><button class="btn">找</button></form>
+      <div class="chips" id="hits"></div>
+    </section>
+    <section class="card" id="card"></section>
+    <section>
+      <p class="lbl">我的标记（拓展不会清掉）</p>
+      <div id="marks"></div>
+      <div class="row">
+        <button class="btn pri" id="go">拓展特别关注</button>
+        <button class="btn" id="stop" hidden>停止</button>
+      </div>
+      <p class="note">每次拓展后，没标记、也没点过的节点先变灰；再拓展一次还没碰，就收起来。收起的不会删，随时能放回来。</p>
+      <p class="status" id="status"></p>
+    </section>
+    <section>
+      <p class="lbl">词条目录：用上面的笔一个个点过去；选「只看说明」时点词条只看说明</p>
+      <div id="cat"></div>
+    </section>
+    <div class="foot">
+      <div><span id="count"></span><button id="unfold" hidden></button></div>
+      <div><span id="sync">标记存在本浏览器</span><button id="export">导出 JSON</button><button id="import">导入 JSON</button><input type="file" id="file" accept=".json,application/json" hidden><button id="reset">恢复初始图谱</button></div>
+    </div>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const DOM = {iot:'物联网',wireless:'无线通信',embedded:'嵌入式',netsec:'网络与安全',uav:'无人机与飞控',ai:'AI 与大模型',dev:'软件开发与部署',mech:'机械工程',cs:'计算机基础'};
+const KIND = {d:'领域',c:'概念 / 技术',t:'具体东西'};
+// [id, 名字, 父节点, 分级 d领域/c概念/t具体东西, 一句话说明, 规格/数字, 是不是你问的]
+const SEED = [
+ ['iot','物联网 IoT',null,'d','把各种设备接上网，让它们自己采集数据、互相配合。智能门锁、共享单车、农田传感器都是物联网。','设备 → 网络 → 云 → 手机'],
+ ['wireless','无线通信','iot','d','不用线、靠电磁波传数据。不同技术在「传多远、传多快、多省电」之间取舍。','频率越低传越远，越高传越快'],
+ ['embedded','嵌入式 / 单片机','iot','d','藏在设备里的小电脑，只干一件事：控制门锁、读传感器、开关灯。','几块钱到几十块一颗'],
+ ['netsec','网络分析与安全','iot','d','看清网络里传的是什么，排查故障、找漏洞、防攻击。','OSI 七层 / TCP/IP 四层'],
+ ['uav','无人机与飞控',null,'d','让飞行器自己保持稳定、按航线飞的那套软硬件。飞控本身就是一块嵌入式板子。','姿态 · 导航 · 控制'],
+ ['ai','AI 与大模型',null,'d','让电脑看懂文字、图片、声音并生成内容的技术。','训练 → 推理'],
+ ['dev','软件开发与部署',null,'d','把想法写成程序，再放到服务器或手机上让人用起来。','写代码 → 版本管理 → 上线'],
+ ['mech','机械工程',null,'d','设计、分析和制造机器的学问：力学、材料、加工、传动。','设计 → 仿真 → 加工'],
+ ['cs','计算机基础',null,'d','计算机内部怎么工作：硬件组成、操作系统、算法、编程语言。','硬件 → 系统 → 程序'],
+ ['lora','LoRa','wireless','c','远距离、超省电的无线技术。一节电池能用几年，信号能传几公里到十几公里，代价是每次只能传很少的数据。','433 / 470 / 868 / 915 MHz · 2–15 km · 0.3–50 kbps',1],
+ ['nfc','NFC 近场通信','wireless','c','只有贴得很近（几厘米内）才能通信。手机刷公交、刷门禁、碰一碰配对耳机都是它。','13.56 MHz · <10 cm · 106–424 kbps',1],
+ ['capture','抓包','netsec','c','把网络上来回传的数据包截下来逐个查看，用来排查网络问题、看 App 偷偷发了什么、做安全测试。','Wireshark · tcpdump · mitmproxy',1],
+ ['esp32','ESP32','embedded','t','乐鑫出的便宜单片机，自带 WiFi 和蓝牙，开发板二三十块钱，做物联网小玩意最常用的芯片之一。','双核 240 MHz · 520 KB 内存 · WiFi + BLE',1],
+ // 领域下的预置子节点
+ ['wifi','WiFi','wireless','c','家里路由器那种无线网，速度快但费电，传几十米。','2.4 / 5 / 6 GHz'],
+ ['ble','蓝牙低功耗 BLE','wireless','c','手环、耳机常用的省电版蓝牙，传十几米。','2.4 GHz · 1–2 Mbps'],
+ ['rfid','RFID 射频识别','wireless','c','用无线电读取标签里的编号，超市防盗签、物流标签、门禁卡都属于它。NFC 是它的一个分支。','LF 125 kHz · HF 13.56 MHz · UHF 900 MHz'],
+ ['sdr','软件无线电 SDR','wireless','c','用一个便宜的接收器加电脑软件，接收各种频段的无线信号，包括 LoRa。','RTL-SDR 约 200 元'],
+ ['mcu','单片机 MCU','embedded','c','把处理器、内存、接口做在一颗芯片上的小电脑，ESP32、STM32 都是单片机。','几 MHz 到几百 MHz'],
+ ['rtos','实时操作系统 RTOS','embedded','c','给单片机用的小型操作系统，让一颗芯片能同时跑多个任务，而且准时。','任务 · 队列 · 信号量'],
+ ['stm32','STM32','mcu','t','意法半导体的单片机家族，工业和飞控里最常见，比 ESP32 更偏工业级，但不带 WiFi。','ARM Cortex-M'],
+ ['freertos','FreeRTOS','rtos','t','最常用的免费 RTOS，ESP32 默认就用它。','开源 · MIT 协议'],
+ ['mqtt','MQTT','iot','c','物联网设备最常用的「发消息」规则：设备往一个话题里发数据，订阅这个话题的都能收到。','端口 1883 / 8883'],
+ ['ha','Home Assistant','iot','t','开源的智能家居中控，把不同品牌的设备放到一个界面里管理和联动。','常跑在树莓派上'],
+ ['pentest','渗透测试','netsec','c','受委托、合法地模拟黑客攻击，提前找出系统漏洞。','先授权，再测试'],
+ ['flipper','Flipper Zero','netsec','t','巴掌大的多功能无线电工具，能读 NFC、RFID、红外、Sub-GHz 信号，安全研究者常用。','Sub-GHz · NFC · 125 kHz · 红外'],
+ // 四个词下的预置子节点
+ ['lorawan','LoRaWAN','lora','c','LoRa 之上的组网规则：规定设备怎样经过网关、把数据送到服务器。LoRa 管「怎么发信号」，LoRaWAN 管「怎么组网」。','Class A / B / C'],
+ ['lgw','LoRa 网关','lora','c','一类设备：同时收几千个 LoRa 设备的信号，再通过网线或 4G 转发到服务器。','8 通道 · SX1302'],
+ ['css','线性调频扩频 CSS','lora','c','LoRa 能传这么远的原因：把信号「拉长」成一段扫频，即使淹没在噪声里也能解出来。','扩频因子 SF7–SF12'],
+ ['sx126x','SX1262 芯片','lora','t','Semtech 新一代 LoRa 收发芯片，功耗更低','+22 dBm 发射功率'],
+ ['meshtastic','Meshtastic','lora','t','开源项目：用 LoRa 板子组一张不靠手机信号的消息网，户外徒步、应急通信常用。','多跳中继 · 手机蓝牙连'],
+ ['mifare','MIFARE 卡','nfc','t','最常见的门禁卡、饭卡、老式公交卡芯片。老款 Classic 加密早已被破解。','1K / 4K 存储'],
+ ['ndef','NDEF 数据格式','nfc','c','NFC 标签里存数据的标准格式，比如存一个网址，手机一碰就打开。','URI / 文本 / 名片记录'],
+ ['hce','HCE 手机模拟卡','nfc','c','手机假装成一张卡，Apple Pay、手机门禁、手机公交卡靠的就是它。','安全芯片 SE / 主机模拟'],
+ ['pn532','PN532 读卡模块','nfc','t','十几块钱的 NFC 读写模块，接到单片机上就能读写卡片。','I2C / SPI / UART'],
+ ['wireshark','Wireshark','capture','t','最有名的免费抓包软件，能把每个数据包按协议一层层拆开给你看。','过滤语法：http && ip.addr==…'],
+ ['tcpip','TCP/IP 协议栈','capture','c','网络通信的分层规则：IP 管地址，TCP 管可靠送达，HTTP 等管具体内容。看懂抓包先要懂它。','三次握手 SYN → SYN-ACK → ACK'],
+ ['https','HTTPS','capture','c','网页通信加了 TLS 加密，抓包只见乱码','端口 443'],
+ ['mitm','中间人代理','capture','c','在手机和服务器中间放一个代理，装上它的证书，就能解开 HTTPS 看清 App 发的内容。','Charles · Fiddler · mitmproxy'],
+ ['monitor','WiFi 监听模式','capture','c','让无线网卡收下空中所有 WiFi 包，不只是发给自己的。','monitor mode · 802.11'],
+ ['arduino','Arduino 开发环境','esp32','t','最容易上手的单片机编程方式，几行代码就能点亮灯、连 WiFi。','setup() + loop()'],
+ ['espidf','ESP-IDF','esp32','t','乐鑫官方的开发框架，功能最全，适合做正式产品。','C 语言 · CMake'],
+ ['micropython','MicroPython','esp32','t','在单片机上直接写 Python，改完不用编译，适合快速试验。','REPL 交互'],
+ ['periph','GPIO 通用输入输出','esp32','c','单片机引脚当开关用，读按键或点灯','3.3 V 电平'],
+];
+const START = new Set(['iot','wireless','embedded','netsec']);
+// 跨领域的联系：[A, B, 说明]
+const CROSS = [
+ ['lora','iot','LoRa 是物联网里传远距离、小数据的主力'],
+ ['esp32','iot','ESP32 是做物联网设备最常用的芯片之一'],
+ ['capture','iot','抓包用来查看物联网设备到底发了什么'],
+ ['esp32','mcu','ESP32 是一种单片机'],
+ ['nfc','rfid','NFC 是高频 RFID 的一种'],
+ ['esp32','wifi','ESP32 自带 WiFi'],['esp32','ble','ESP32 自带蓝牙'],
+ ['esp32','freertos','ESP32 默认跑 FreeRTOS'],
+ ['esp32','sx126x','ESP32 + SX1262 就是常见的 LoRa 开发板'],
+ ['esp32','pn532','ESP32 接上 PN532 就能读写 NFC 卡'],
+ ['esp32','monitor','ESP32 也能进入监听模式抓 WiFi 包'],
+ ['esp32','mqtt','ESP32 常用 MQTT 把数据发到服务器'],
+ ['meshtastic','esp32','Meshtastic 常跑在 ESP32 LoRa 板上'],
+ ['sdr','lora','用 SDR 可以截获和分析 LoRa 信号'],
+ ['sdr','capture','SDR 相当于给无线电信号抓包'],
+ ['flipper','nfc','Flipper Zero 能读取和模拟 NFC 卡'],
+ ['flipper','rfid','Flipper Zero 能读 125 kHz 低频卡'],
+ ['mitm','https','中间人代理就是用来解开 HTTPS 的'],
+ ['lorawan','mqtt','LoRaWAN 服务器常用 MQTT 把数据转出去'],
+ ['pentest','capture','抓包是渗透测试的基本功'],
+ ['mifare','pn532','PN532 能读写 MIFARE 卡'],
+ ['uav','embedded','飞控本身就是一块嵌入式板子'],
+ ['uav','wireless','遥控和数传都靠无线电'],
+ ['ai','iot','把 AI 放到设备上就是「边缘 AI」'],
+ ['dev','iot','设备的数据最后要靠服务器和 App 展示'],
+ ['cs','embedded','单片机就是一台很小的计算机'],
+ ['cs','dev','写软件离不开计算机基础'],
+ ['mech','uav','机体结构、材料和加工都属于机械'],
+];
+// 备选：从你以前的项目对话里挑出来的。[id, 名字, 父节点, 分级, 一句话说明, 出处]
+const CANDS = [
+ // 无线通信
+ ['h_rc','遥控与数传链路','wireless','c','遥控器到飞机、飞机到地面站的无线连接。',''],
+ ['h_elrs','ExpressLRS（ELRS）','h_rc','t','开源的远距离遥控链路系统，延迟低、传得远。',''],
+ ['h_crsf','CRSF 协议','h_rc','c','接收机和飞控之间的高速串口协议。',''],
+ ['h_sbus','SBUS','h_rc','c','一根线传多路遥控通道的串行总线。',''],
+ ['h_mavlink','MAVLink','h_rc','c','飞控和地面站之间的标准通信协议。',''],
+ ['h_transp','透传','h_rc','c','中间设备不解析、原样转发数据。',''],
+ ['h_esim','eSIM','wireless','t','写在手机里的虚拟电话卡。',''],
+ ['h_gps','GPS 定位','wireless','c','靠卫星信号算出自己在哪，定位追踪器、飞控都要用。',''],
+ ['h_cardtype','门禁卡类型','nfc','c','看门禁卡是哪种芯片、能不能复制进手机',''],
+ // 嵌入式
+ ['h_xiao','XIAO ESP32S3','esp32','t','拇指大的 ESP32-S3 开发板，自带摄像头和麦克风接口。',''],
+ ['h_esp32cam','ESP32-CAM','esp32','t','带摄像头的 ESP32 板，部分引脚影响开机，接线要小心。',''],
+ ['h_m5','M5StickS3','esp32','t','带屏幕和按键的 ESP32-S3 小开发板。',''],
+ ['h_pio','PlatformIO','esp32','t','单片机统一的开发和编译工具。',''],
+ ['h_efuse','eFuse 熔丝','esp32','c','芯片里只能烧一次的设置位，烧错不能恢复。',''],
+ ['h_bus','通信接口与总线','embedded','c','芯片和芯片、模块之间怎么接线传数据。',''],
+ ['h_uart','UART 串口','h_bus','c','最常见的两线异步串口。',''],
+ ['h_rs485','RS485','h_bus','c','差分信号总线，传得远、抗干扰强。',''],
+ ['h_pwm','PWM 脉宽调制','h_bus','c','用脉冲宽度控制电机转速或舵机角度。',''],
+ ['h_dshot','DShot 协议','h_bus','c','飞控给电调发转速指令的数字协议。',''],
+ ['h_bidshot','双向 DShot','h_dshot','c','电调把实际转速回传给飞控。',''],
+ ['h_i2s','I2S 音频接口','h_bus','c','数字麦克风和功放传声音数据用的接口',''],
+ ['h_sensor','传感器','embedded','c','把距离、加速度、声音等物理量变成电信号。',''],
+ ['h_ultra','超声波测距传感器','h_sensor','t','靠声波回波测距，怕水、近处有盲区。',''],
+ ['h_fmcw','FMCW 调频连续波雷达','h_sensor','c','用连续扫频的电波算距离，比脉冲法近处更准。',''],
+ ['h_xm125','XM125 毫米波雷达模块','h_fmcw','t','60 GHz 毫米波雷达板，能测几厘米到几米的距离。',''],
+ ['h_lidar','激光雷达 LiDAR','h_sensor','c','发射激光测距、扫出三维点云。',''],
+ ['h_imu','IMU 惯性测量单元','h_sensor','c','测加速度和转动，飞控和建图都离不开。',''],
+ ['h_stereo','双目深度相机','h_sensor','c','用左右两个镜头像人眼一样算距离。',''],
+ ['h_wiring','接线、供电与防水','embedded','c','线多粗、用什么插头、怎么防水。',''],
+ ['h_awg','AWG 线规','h_wiring','c','美标线径编号，数字越小线越粗。',''],
+ ['h_xt','XT30 接头','h_wiring','t','小电池常用的大电流插头，约 30 A',''],
+ ['h_gh','GH1.25 连接器','h_wiring','t','1.25 毫米间距的小插头，飞控上很常见。',''],
+ ['h_ip68','IP68 防水等级','h_wiring','c','防尘防水分级标准，68 是最高一档之一。',''],
+ ['h_potting','灌胶防水','h_wiring','c','用环氧胶把电路板整个封起来防水。',''],
+ // 物联网
+ ['h_bark','Bark 推送','iot','t','一条网址就能把消息推到 iPhone。',''],
+
+ // 网络与安全
+ ['h_remote','远程访问','netsec','c','在别处登录、操作家里或实验室的电脑。',''],
+ ['h_ssh','SSH','h_remote','c','加密的远程登录协议。',''],
+ ['h_termius','Termius','h_ssh','t','手机上的 SSH 客户端。',''],
+ ['h_vscoderemote','VS Code Remote-SSH','h_ssh','t','用 VS Code 直接编辑远程电脑上的代码。',''],
+ ['h_rdp','远程控制软件','h_remote','t','向日葵、ToDesk、UU 远程这类，走厂商云中转。',''],
+ ['h_vpn','VPN 与组网','netsec','c','给不在一处的设备拉一条加密通道。',''],
+ ['h_wg','WireGuard','h_vpn','c','现代、轻量的 VPN 协议。',''],
+ ['h_ts','Tailscale','h_wg','t','基于 WireGuard 的组网工具，几台设备像在一个局域网。',''],
+ ['h_funnel','Tailscale Funnel','h_ts','t','把本机服务安全地开放到公网。',''],
+ ['h_clash','Clash Verge 分流','h_vpn','t','按规则决定哪些流量走代理。',''],
+ ['h_dpi','深度包检测 DPI','h_vpn','c','运营商识别并拦截特定流量的技术。',''],
+ ['h_fw','防火墙','netsec','c','只放行该放的端口，挡住其余连接',''],
+ ['h_loginalert','登录告警','h_fw','c','有人 SSH 或远程桌面登录就推送到手机。',''],
+ ['h_apirelay','API 中转站风险','netsec','c','第三方转发 AI 接口，可能被偷看或改写。',''],
+ ['h_docker','Docker 容器','netsec','t','把程序关进隔离的小盒子里跑。',''],
+ ['h_perm','Linux 权限','netsec','c','规定谁能读、写、执行哪个文件',''],
+ // 无人机与飞控
+ ['h_fc','飞控','uav','c','无人机的大脑：读传感器、算姿态、控电机。',''],
+ ['h_px4','PX4','h_fc','t','最常用的开源飞控固件之一。',''],
+ ['h_uorb','uORB','h_px4','c','PX4 内部模块之间收发消息的总线。',''],
+ ['h_nsh','NSH 命令行','h_px4','c','PX4 的命令行，能直接让舵机转到指定角度。',''],
+ ['h_failsafe','失控保护','h_px4','c','遥控断了以后飞机怎么办：降落还是返航。',''],
+ ['h_qgc','QGroundControl','h_px4','t','PX4 的地面站软件，调参和校准用。',''],
+ ['h_pixhawk','Pixhawk 6C','h_fc','t','常见的开源飞控硬件。',''],
+ ['h_micoair','微空 743 飞控板','h_fc','t','国产飞控板，可以跑 PX4 等固件。',''],
+ ['h_esc','电调','uav','c','把飞控的指令变成电机电流。',''],
+ ['h_bluejay','Bluejay 电调固件','h_esc','t','开源电调固件，支持双向 DShot。',''],
+ ['h_ctrl','控制方法','uav','c','怎么根据误差算出电机和舵面该怎么动。',''],
+ ['h_pid','PID 控制器','h_ctrl','c','飞控速率环、姿态环用的经典控制器',''],
+ ['h_mpc','模型预测控制 MPC','h_ctrl','c','先预测未来几步，再算最优动作。',''],
+ ['h_alloc','控制分配 / 混控','h_ctrl','c','把姿态指令换算成每个电机、舵机的输出。',''],
+ ['h_difthrust','差动推力偏航','h_alloc','c','靠左右电机转速差转向，不用舵面。',''],
+ ['h_vector','推力矢量','h_alloc','c','改变电机朝向来改变推力方向。',''],
+ ['h_aero','空气动力学','uav','c','空气怎么托起机翼、怎么让飞机稳定。',''],
+ ['h_wige','地面效应','h_aero','c','贴近地面或水面飞时升力变大、阻力变小。',''],
+ ['h_stab','静稳定性','h_aero','c','重心和气动中心的位置决定飞机能不能自己稳住。',''],
+ ['h_cl','翼型升力系数','h_aero','c','衡量机翼截面产生升力能力的参数。',''],
+ ['h_blown','吹气襟翼','h_aero','c','让螺旋桨气流吹过机翼来增加升力。',''],
+ ['h_downwash','安定面','h_aero','c','尾部固定翼面，让飞行器保持稳定',''],
+ ['h_ns','纳维-斯托克斯方程','h_aero','c','描述空气和水怎么流动的基本方程。',''],
+ ['h_tilt','倾转旋翼 VTOL','uav','c','旋翼能转向，既能垂直起降又能平飞。',''],
+
+ ['h_prop','桨径选型','uav','c','螺旋桨选多大直径和螺距',''],
+ ['h_sim','仿真','uav','c','先在电脑里飞，再上真机。',''],
+ ['h_isaac','NVIDIA Isaac Sim','h_sim','t','英伟达的机器人仿真平台，能接 PX4 软件在环。',''],
+ ['h_ros','ROS','h_sim','t','机器人操作系统，常用来搭仿真和建图。',''],
+ ['h_wave','波浪物理引擎','h_sim','c','在仿真里模拟水面波浪。',''],
+ // AI 与大模型
+ ['h_llm','大模型','ai','c','能读写文字、写代码的大型语言模型。',''],
+ ['h_claude','Claude Opus','h_llm','t','Anthropic 能力最强的模型，适合难活',''],
+ ['h_cc','Claude Code','h_llm','t','命令行 AI 编程工具，能读写代码跑命令',''],
+ ['h_skill','Skill 技能包','h_cc','c','给 Claude 装可复用的做事流程',''],
+ ['h_tts','语音合成 TTS','ai','c','把文字读成语音。',''],
+ ['h_kokoro','Kokoro','h_tts','t','能在本机跑的英文朗读模型。',''],
+ ['h_cv','计算机视觉','ai','c','让电脑看懂图片和视频。',''],
+ ['h_yolo','YOLO 目标检测','h_cv','t','速度很快的模型，在图里框出物体。',''],
+ ['h_dino','DINOv2','h_cv','t','不用人工标注、自己学图像特征的视觉大模型。',''],
+ ['h_sgbm','SGBM 立体匹配','h_cv','c','用左右两张图算出每个点的深度。',''],
+ ['h_gs','高斯泼溅','h_cv','c','用大量彩色小椭球拼出三维场景。',''],
+ ['h_meshroom','Meshroom','h_cv','t','免费软件，多张照片生成三维模型。',''],
+ ['h_defect','深度学习缺陷检测','h_cv','c','在电路板照片上自动找缺件和缺陷。',''],
+ ['h_homo','同态滤波','h_cv','c','压暗亮处、提亮暗处的图像预处理。',''],
+ ['h_ml','机器学习方法','ai','c','训练模型、调参、评估的通用做法。',''],
+ ['h_bo','贝叶斯优化','h_ml','c','少试几次就找到最好参数的调参方法。',''],
+ ['h_leak','数据泄漏','h_ml','c','测试数据混进训练，导致结果虚高。',''],
+ // 软件开发与部署
+ ['h_fe','前端与后端','dev','c','前端是看到的界面，后端是背后处理数据的服务。',''],
+ ['h_cloud','云服务','dev','c','租用云厂商的服务器和服务，不用自己买机器',''],
+ ['h_cfw','Cloudflare Workers','h_cloud','t','跑在 Cloudflare 上的无服务器小函数。',''],
+ ['h_wxmp','微信小程序','h_cloud','c','在微信里打开即用的小应用',''],
+ ['h_github','GitHub','dev','t','在线代码托管和多人协作平台',''],
+ ['h_wsl','WSL','dev','t','在 Windows 里跑 Linux 的官方功能。',''],
+ ['h_oauth','OAuth 授权','dev','c','用第三方账号授权登录，出错会返回 403。',''],
+ ['h_decomp','反编译','dev','c','把编译好的程序还原成近似的源代码。',''],
+];
+
+
+// 拆开合并词条后新增的（原 id 留给主词/上级，标记不丢）
+const SPLIT = [
+ ['sx126x_1276','SX1276 芯片','lora','t','Semtech 上一代 LoRa 收发芯片，老模块常用',''],
+ ['https_tls','TLS 加密协议','https','c','HTTPS 底下负责加密和验证身份的那一层',''],
+ ['periph_i2c','I2C 总线','esp32','c','两根线挂多个传感器，按地址点名通信',''],
+ ['periph_spi','SPI 总线','esp32','c','四根线高速传数据，常接屏幕和存储卡',''],
+ ['h_cardtype_anti','防复制门禁卡','h_cardtype','c','带加密或防写保护、不能随便复制的门禁卡',''],
+ ['h_i2s_pdm','PDM 麦克风接口','h_bus','c','数字麦克风常用的单线数据加时钟接口',''],
+ ['h_xt_60','XT60 接头','h_wiring','t','无人机电池最常用的大电流插头，约 60 A',''],
+ ['h_fw_scan','端口扫描','netsec','c','挨个试目标机器开了哪些端口',''],
+ ['h_perm_sudo','sudo 命令','h_perm','t','临时用管理员身份执行一条命令',''],
+ ['h_perm_chmod','chmod 命令','h_perm','t','修改文件的读写执行权限，如 770',''],
+ ['h_pid_tune','PID 自动整定','h_pid','c','让飞控自己试出合适的 PID 参数',''],
+ ['h_downwash_angle','下洗角','h_aero','c','机翼后方气流向下偏的角度',''],
+ ['h_prop_motor','电机选型','uav','c','电机选多少 KV、多大功率才配得上桨',''],
+ ['h_claude_sonnet','Claude Sonnet','h_llm','t','Anthropic 的模型，比 Opus 更快更省',''],
+ ['h_cc_sub','子代理 Subagent','h_cc','c','Claude Code 把活分给其他模型去做',''],
+ ['h_skill_mem','长期记忆','h_cc','c','用记忆文件让 Claude 跨会话记事',''],
+ ['h_cloud_sls','无服务器 Serverless','h_cloud','c','不用管服务器，写段函数放云上按次运行',''],
+ ['h_wxmp_fn','微信云函数','h_wxmp','c','小程序配套的云端函数，处理数据和请求',''],
+ ['h_github_actions','GitHub Actions','h_github','t','GitHub 自带的自动任务，按月有免费额度',''],
+ ['p_cm_amfm_fm','调频 FM','p_cm_mod','c','改电波的频率来带声音，抗干扰更好',''],
+ ['p_cm_fsk_ask','ASK 幅移键控','p_cm_fsk','c','用电波强弱表示 0 和 1',''],
+ ['p_cm_fsk_fsk','FSK 频移键控','p_cm_fsk','c','用电波频率高低表示 0 和 1',''],
+ ['p_cm_fsk_psk','PSK 相移键控','p_cm_fsk','c','用电波相位变化表示 0 和 1',''],
+ ['p_cm_dsss_ds','DSSS 直接序列扩频','p_cm_dsss','c','用高速码片把信号铺宽，WiFi 早期用',''],
+ ['p_cm_dsss_fh','FHSS 跳频扩频','p_cm_dsss','c','按约定顺序不停换频率发送，遥控常用',''],
+ ['p_cm_pcbant_cer','陶瓷天线','p_cm_rf','c','陶瓷做的贴片小天线，体积小',''],
+ ['p_cm_cellnet_bs','基站','p_cm_cellnet','c','蜂窝网络里负责一片小区收发信号的站点',''],
+ ['p_cm_orbit_geo','地球同步轨道 GEO','p_cm_sat','c','离地约三万六千公里，卫星相对地面不动',''],
+ ['p_cm_matter_thread','Thread 协议','p_cm_short','c','低功耗网状无线组网协议，可承载 Matter',''],
+ ['p_cm_ldpc_polar','Polar 码','p_cm_code','c','5G 控制信道用的纠错编码',''],
+ ['p_cm_multiaccess_tdma','TDMA 时分多址','p_cm_multiaccess','c','按时间片轮流让不同用户发送',''],
+ ['p_cm_multiaccess_fdma','FDMA 频分多址','p_cm_multiaccess','c','每个用户分一段不同频率',''],
+ ['p_cm_multiaccess_cdma','CDMA 码分多址','p_cm_multiaccess','c','同频同时发，靠不同编码区分用户',''],
+ ['p_cm_duplex_tdd','TDD 时分双工','p_cm_duplex','c','同一频段，上下行分时间轮流用',''],
+ ['p_cm_duplex_fdd','FDD 频分双工','p_cm_duplex','c','上下行各占一段频率同时收发',''],
+ ['p_nw_lan_wan','广域网 WAN','p_nw_dev','c','跨城市跨地区的大范围网络',''],
+ ['p_nw_ethernet_cable','网线','p_nw_ethernet','t','连以太网的线，常见 Cat5e、Cat6',''],
+ ['p_nw_ap_onu','光猫','p_nw_dev','c','把入户光纤信号转成网线信号',''],
+ ['p_nw_revproxy_lb','负载均衡','p_nw_revproxy','c','把请求分摊给多台服务器',''],
+ ['p_nw_tcpudp_udp','UDP 协议','p_nw_proto','c','发了就不管，快但不保证到达',''],
+ ['p_nw_quic_h3','HTTP/3','p_nw_proto','c','跑在 QUIC 上的新一代 HTTP',''],
+ ['p_nw_rtsp_rtmp','RTMP 推流协议','p_nw_proto','c','直播时把视频推到平台常用的协议',''],
+ ['p_nw_email_imap','IMAP 收信协议','p_nw_proto','c','在多台设备间同步收件箱',''],
+ ['p_nw_loss_jitter','网络抖动','p_nw_perf','c','数据包到达时间忽快忽慢',''],
+ ['p_nw_dig_dig','dig','p_nw_perf','t','查询域名解析细节的命令行工具，信息更全',''],
+ ['p_nw_asym_rsa','RSA 算法','p_nw_asym','t','最经典的公钥加密算法',''],
+ ['p_nw_brute_stuff','撞库','p_nw_attack','c','拿别处泄露的账号密码去试别的网站',''],
+ ['p_cs_pipe_ooo','乱序执行','p_cs_cpu','c','CPU 不按程序顺序，先做能做的指令',''],
+ ['p_cs_vmem_page','分页','p_cs_vmem','c','把内存切成固定大小的页来映射管理',''],
+ ['p_cs_vm_vm','虚拟机','p_cs_vm','c','在一台电脑里模拟出的另一台电脑',''],
+ ['p_cs_tree_bin','二叉树','p_cs_tree','c','每个节点最多两个分叉的树',''],
+ ['p_cs_bfsdfs_dfs','深度优先搜索 DFS','p_cs_graph','c','沿一条路走到底再回头遍历图',''],
+ ['p_cs_mysql_pg','PostgreSQL','p_cs_rdb','t','功能更全的开源关系型数据库',''],
+ ['p_cs_async_coro','协程','p_cs_async','c','能暂停和恢复的函数，常用来写异步',''],
+ ['p_cs_raft_raft','Raft','p_cs_raft','t','好理解、工程上常用的共识算法',''],
+ ['p_cs_raft_paxos','Paxos','p_cs_raft','t','最早的经典共识算法，较难理解',''],
+ ['p_dv_json_yaml','YAML','p_dv_api','c','靠缩进表示层级的配置文件格式',''],
+ ['p_dv_html_css','CSS','p_dv_web','c','控制网页样式和排版的语言',''],
+ ['p_dv_flask_fastapi','FastAPI','p_dv_web','t','写接口快、自带文档的 Python 后端框架',''],
+ ['p_ai_rnn_lstm','LSTM 长短期记忆网络','p_ai_rnn','c','加了门控的 RNN，能记住更长的序列',''],
+ ['p_ai_kp_pose','人体姿态估计','p_ai_kp','c','由关键点连成骨架，判断人的姿势',''],
+ ['p_ai_feat_sift','SIFT 特征','p_ai_feat','t','经典特征点算法，稳但慢',''],
+ ['p_ai_feat_orb','ORB 特征','p_ai_feat','t','快速特征点算法，ORB-SLAM 用它',''],
+ ['p_ai_arealine_line','线阵相机','p_ai_ind','c','一次只拍一行，靠物体移动扫描成图',''],
+ ['p_ai_sensor_ccd','CCD 传感器','p_ai_ind','c','老一代图像传感器，噪声低但耗电',''],
+ ['p_ai_temp_t','温度参数','p_ai_temp','c','调高更随机发散，调低更稳定保守',''],
+ ['p_rb_frames_ned','NED 北东地坐标系','p_rb_frames','c','x 朝北 y 朝东 z 朝下，PX4 用',''],
+ ['p_rb_frames_enu','ENU 东北天坐标系','p_rb_frames','c','x 朝东 y 朝北 z 朝上，ROS 用',''],
+ ['p_rb_matlab_sim','Simulink','p_rb_matlab','t','MATLAB 里拖方块搭模型做仿真的工具',''],
+ ['p_me_key_spline','花键','p_me_key','t','轴上一圈多个齿的键，能传更大转矩',''],
+ ['p_me_pla_petg','PETG','p_me_plastic','t','比 PLA 更韧更耐热的打印耗材',''],
+ ['p_el_buck_boost','Boost 升压电路','p_el_power','c','开关电源里把电压升高的基本电路',''],
+ ['p_el_fuse_rev','防反接电路','p_el_power','c','电源接反时不让电流流过，防烧板',''],
+ ['p_el_gnd_plane','地平面','p_el_gnd','c','PCB 上整片铺铜的地，信号回流路径短',''],
+ ['p_el_psu_meter','直流功率表','p_el_tool','t','串在电源线上，显示电压、电流和功率',''],
+ ['p_el_swd_swd','SWD 调试接口','p_el_mcu','c','ARM 芯片用的两线调试烧录接口',''],
+ ['p_el_xtal_tree','时钟树','p_el_mcu','c','把基准时钟分频倍频后送给各个外设',''],
+];
+// 通用词条：按操作者背景补的「可能听说过」的概念
+const POOL = [
+ ['p_cm_ofdm','正交频分复用 OFDM','p_cm_mod','c','数据分到许多子载波并行传，WiFi 与 4G/5G 用。',''],
+ ['p_cm_mod','调制与解调','wireless','c','把数据「装」到电波上，再从电波里取出来。',''],
+ ['p_cm_sig','信号与信道基础','wireless','c','电波传得多快、多远、多干净的基本量。',''],
+ ['p_cm_rf','天线与射频电路','wireless','c','电波发出去、收回来要经过的天线和电路。',''],
+ ['p_cm_cell','蜂窝移动通信','wireless','c','手机上网打电话用的一代代移动网络。',''],
+ ['p_cm_sat','卫星通信与导航','wireless','c','靠太空里的卫星传信号、定位置。',''],
+ ['p_cm_short','短距与组网无线技术','wireless','c','家里、设备之间用的各种近距离无线协议。',''],
+ ['p_cm_code','编码与多址接入','wireless','c','让信号抗出错、让多人共用同一频段的办法。',''],
+ ['p_cm_amfm','调幅 AM','p_cm_mod','c','改电波的强弱来带声音，中波收音机用',''],
+ ['p_cm_fsk','数字调制','p_cm_mod','c','用电波的强弱、频率、相位表示 0 和 1',''],
+ ['p_cm_qam','正交幅度调制 QAM','p_cm_mod','c','同时改幅度和相位，一次传更多比特。',''],
+ ['p_cm_carrier','载波','p_cm_mod','c','用来承载信息的那一路固定频率电波。',''],
+ ['p_cm_dsss','扩频通信','p_cm_mod','c','把信号摊到更宽频带上，抗干扰难窃听',''],
+ ['p_cm_bw','带宽','p_cm_sig','c','信号占用的频率范围，越宽能传的数据越多。',''],
+ ['p_cm_snr','信噪比 SNR','p_cm_sig','c','有用信号比噪声强多少，越高越清晰。',''],
+ ['p_cm_shannon','香农定理','p_cm_sig','c','给出信道无差错传输速率的理论上限。',''],
+ ['p_cm_nyquist','奈奎斯特采样定理','p_cm_sig','c','采样频率至少要是信号最高频率的两倍。',''],
+ ['p_cm_db','dB 与 dBm','p_cm_sig','c','用对数表示功率比值与绝对功率的单位。',''],
+ ['p_cm_multipath','多径效应与衰落','p_cm_sig','c','电波经反射走多条路，叠加后时强时弱。',''],
+ ['p_cm_pathloss','路径损耗','p_cm_sig','c','电波随距离变远而变弱的程度。',''],
+ ['p_cm_ism','ISM 免许可频段','p_cm_sig','c','不用申请牌照就能用的频段，如 2.4 GHz。',''],
+ ['p_cm_ber','误码率 BER','p_cm_sig','c','接收到的比特里出错的比例。',''],
+ ['p_cm_doppler','多普勒效应','p_cm_sig','c','收发双方相对运动时，接收频率会偏移。',''],
+ ['p_cm_gain','天线增益 dBi','p_cm_rf','c','天线把能量集中到某方向的能力。',''],
+ ['p_cm_dipole','偶极子天线','p_cm_rf','c','最基本的天线，两段等长金属棒。',''],
+ ['p_cm_pcbant','PCB 天线','p_cm_rf','c','直接画在电路板上的铜线天线',''],
+ ['p_cm_vswr','驻波比 VSWR','p_cm_rf','c','衡量天线反射掉多少功率，越接近 1 越好。',''],
+ ['p_cm_imatch','阻抗匹配','p_cm_rf','c','让电路与天线阻抗一致，避免功率被反射。',''],
+ ['p_cm_rffe','射频前端','p_cm_rf','c','天线与基带之间的放大、滤波、切换电路总称。',''],
+ ['p_cm_lna','低噪声放大器 LNA','p_cm_rf','c','放在接收端最前面放大微弱信号且少加噪声。',''],
+ ['p_cm_pa','功率放大器 PA','p_cm_rf','c','发射前把信号放大到足够功率。',''],
+ ['p_cm_mixer','混频器与本振','p_cm_rf','c','把信号频率搬到高频或低频的电路。',''],
+ ['p_cm_sparam','S 参数','p_cm_rf','c','用反射和传输系数描述射频器件特性。',''],
+ ['p_cm_sma','SMA 射频接头','p_cm_rf','t','天线与射频板上常见的螺纹同轴接头。',''],
+ ['p_cm_cellnet','蜂窝网络','p_cm_cell','c','把地区分成小区，每区由基站覆盖',''],
+ ['p_cm_lte','4G LTE','p_cm_cell','c','第四代移动通信标准，全面用 IP 传数据。',''],
+ ['p_cm_nr','5G NR','p_cm_cell','c','第五代移动通信标准，高速、低延迟、海量连接。',''],
+ ['p_cm_mimo','MIMO 多天线技术','p_cm_cell','c','收发两端用多根天线，成倍提高速率。',''],
+ ['p_cm_beam','波束赋形','p_cm_cell','c','让多根天线合力把信号对准用户方向。',''],
+ ['p_cm_mmwave','毫米波','p_cm_cell','c','30 到 300 GHz 的电波，速度快但穿墙差。',''],
+ ['p_cm_nbiot','NB-IoT 窄带物联网','p_cm_cell','c','运营商提供的低功耗、广覆盖物联网网络。',''],
+ ['p_cm_sim','SIM 卡','p_cm_cell','c','存放用户身份、让手机接入运营商网络的卡。',''],
+ ['p_cm_handover','切换与漫游','p_cm_cell','c','移动时手机换基站或换运营商网络不断线。',''],
+ ['p_cm_baseband','基带芯片','p_cm_cell','c','手机里负责调制解调和协议处理的芯片。',''],
+ ['p_cm_satcom','卫星通信','p_cm_sat','c','用人造卫星转发信号，海上山区也能通信。',''],
+ ['p_cm_orbit','低轨 LEO','p_cm_sat','c','离地几百到两千公里，延迟小，如星链',''],
+ ['p_cm_starlink','星链 Starlink','p_cm_sat','t','SpaceX 的低轨卫星互联网服务。',''],
+ ['p_cm_iridium','铱星 Iridium','p_cm_sat','t','覆盖全球两极的低轨卫星电话与短报文系统。',''],
+ ['p_cm_bds','北斗卫星导航系统','p_cm_sat','c','中国自主的全球卫星导航系统，可发短报文。',''],
+ ['p_cm_gnss','全球卫星导航系统 GNSS','p_cm_sat','c','GPS、北斗、伽利略、格洛纳斯等的统称。',''],
+ ['p_cm_rtk','RTK 差分定位','p_cm_sat','c','借基准站修正，把定位误差缩到厘米级。',''],
+ ['p_cm_zigbee','Zigbee','p_cm_short','c','低功耗、可自组网的短距离无线协议，用于智能家居。',''],
+ ['p_cm_uwb','UWB 超宽带','p_cm_short','c','用极短脉冲测距，精度可到十厘米级。',''],
+ ['p_cm_matter','Matter 协议','p_cm_short','c','让不同品牌智能家居互通的应用层标准',''],
+ ['p_cm_mesh','Mesh 网状组网','p_cm_short','c','设备之间互相转发，覆盖范围逐跳扩大。',''],
+ ['p_cm_433','433 MHz 无线模块','p_cm_short','t','便宜的远距离遥控模块，车库门遥控常用。',''],
+ ['p_cm_nrf24','nRF24L01','p_cm_short','t','常见的 2.4 GHz 低成本无线收发芯片。',''],
+ ['p_cm_espnow','ESP-NOW','p_cm_short','c','乐鑫的免路由设备直连协议，ESP32 之间用。',''],
+ ['p_cm_fec','前向纠错 FEC','p_cm_code','c','多发冗余数据，接收方自己纠正错误。',''],
+ ['p_cm_crc','循环冗余校验 CRC','p_cm_code','c','用多项式算校验码，发现数据传输出错。',''],
+ ['p_cm_ldpc','LDPC 码','p_cm_code','c','5G 数据信道用的纠错编码',''],
+ ['p_cm_multiaccess','多址接入','p_cm_code','c','让多个用户共用同一段频谱的办法',''],
+ ['p_cm_duplex','双工方式','p_cm_code','c','上行和下行怎么分享频谱',''],
+ ['p_nw_addr','地址与寻址','netsec','c','网络里给每台设备编号、找到对方的办法。',''],
+ ['p_nw_dev','网络设备与组网','netsec','c','把设备连成网的硬件和家庭、公司网络结构。',''],
+ ['p_nw_svc','常见网络服务','netsec','c','让上网顺畅、安全的各种后台服务。',''],
+ ['p_nw_proto','传输与应用协议','netsec','c','网络上设备互相说话时遵守的规则。',''],
+ ['p_nw_perf','网络性能与诊断','netsec','c','衡量网速快慢、排查网络哪里出问题。',''],
+ ['p_nw_crypto','加密与认证','netsec','c','让数据不被偷看、不被篡改、能确认身份。',''],
+ ['p_nw_attack','常见网络攻击与防护','netsec','c','黑客常用的手段，以及对应的防范办法。',''],
+ ['p_nw_ip','IP 地址','p_nw_addr','c','网络里每台设备的编号，如 192.168.1.1。',''],
+ ['p_nw_mask','子网掩码与 CIDR','p_nw_addr','c','指出 IP 地址里哪段是网络号、哪段是设备号。',''],
+ ['p_nw_ipv6','IPv6','p_nw_addr','c','128 位新地址，解决 IPv4 地址不够用。',''],
+ ['p_nw_private','私有地址','p_nw_addr','c','只在内网使用的地址段，如 192.168.x.x。',''],
+ ['p_nw_mac','MAC 地址','p_nw_addr','c','网卡出厂自带的物理地址，局域网内用它找人。',''],
+ ['p_nw_arp','ARP 地址解析','p_nw_addr','c','在局域网里由 IP 地址查出对应 MAC 地址。',''],
+ ['p_nw_port','端口','p_nw_addr','c','一台设备上区分不同程序的编号，如 80、443。',''],
+ ['p_nw_router','路由器','p_nw_dev','c','在不同网络之间转发数据包的设备。',''],
+ ['p_nw_switch','交换机','p_nw_dev','c','在同一局域网里按 MAC 地址转发数据的设备。',''],
+ ['p_nw_lan','局域网 LAN','p_nw_dev','c','家里或公司内部的小范围网络',''],
+ ['p_nw_gateway','网关','p_nw_dev','c','内网通向外网的出口，常由路由器担任。',''],
+ ['p_nw_ethernet','以太网','p_nw_dev','c','最常见的有线局域网标准',''],
+ ['p_nw_poe','PoE 网线供电','p_nw_dev','c','一根网线同时传数据和供电，摄像头常用。',''],
+ ['p_nw_vlan','VLAN 虚拟局域网','p_nw_dev','c','在一台交换机上逻辑隔出多个互不相通的网络。',''],
+ ['p_nw_ap','无线接入点 AP','p_nw_dev','c','发出 WiFi 信号让设备无线上网',''],
+ ['p_nw_dns','DNS 域名解析','p_nw_svc','c','把网址翻译成 IP 地址的「电话簿」。',''],
+ ['p_nw_dhcp','DHCP 自动分配地址','p_nw_svc','c','设备接入网络时自动领取 IP 地址。',''],
+ ['p_nw_nat','NAT 地址转换','p_nw_svc','c','让内网很多设备共用一个公网 IP 上网。',''],
+ ['p_nw_proxy','代理服务器','p_nw_svc','c','替你去访问网站的中间服务器。',''],
+ ['p_nw_revproxy','反向代理','p_nw_svc','c','站在服务器前面替它接收请求',''],
+ ['p_nw_cdn','CDN 内容分发网络','p_nw_svc','c','把内容缓存到各地节点，让用户就近取。',''],
+ ['p_nw_ddns','DDNS 动态域名','p_nw_svc','c','家里公网 IP 变了，域名也自动跟着更新。',''],
+ ['p_nw_nginx','Nginx','p_nw_svc','t','常用的网页服务器，也常当反向代理。',''],
+ ['p_nw_osi','OSI 七层模型','p_nw_proto','c','把网络通信分成七层来讲解的理论模型。',''],
+ ['p_nw_tcpudp','TCP 协议','p_nw_proto','c','可靠传输，丢了会重发，但慢一些',''],
+ ['p_nw_handshake','TCP 三次握手','p_nw_proto','c','建立 TCP 连接前，双方来回确认三次。',''],
+ ['p_nw_http','HTTP 协议','p_nw_proto','c','浏览器和网站服务器之间传网页的规则。',''],
+ ['p_nw_status','HTTP 状态码','p_nw_proto','c','服务器回复的数字，如 200 成功、404 找不到。',''],
+ ['p_nw_rest','REST API','p_nw_proto','c','用网址和 HTTP 动作让程序之间交换数据的风格。',''],
+ ['p_nw_ws','WebSocket','p_nw_proto','c','让浏览器和服务器保持长连接，随时双向推送。',''],
+ ['p_nw_quic','QUIC 协议','p_nw_proto','c','基于 UDP 的新传输协议，建连快抗丢包',''],
+ ['p_nw_rtsp','RTSP 流媒体协议','p_nw_proto','c','网络摄像头取视频流常用的协议',''],
+ ['p_nw_cookie','Cookie 与会话','p_nw_proto','c','网站存在浏览器里的小标记，用来记住你登录了。',''],
+ ['p_nw_email','SMTP 发信协议','p_nw_proto','c','负责把邮件发出去',''],
+ ['p_nw_latency','网络延迟','p_nw_perf','c','数据从发出到对方收到所花的时间。',''],
+ ['p_nw_throughput','带宽与吞吐量','p_nw_perf','c','带宽是管道最大容量，吞吐量是实际跑出的速度。',''],
+ ['p_nw_loss','丢包','p_nw_perf','c','数据包在路上丢了没送到',''],
+ ['p_nw_ping','Ping','p_nw_perf','t','发小包测对方通不通、往返要多久的命令。',''],
+ ['p_nw_traceroute','Traceroute 路由追踪','p_nw_perf','t','列出数据包一路经过的每个路由器。',''],
+ ['p_nw_mtu','MTU 最大传输单元','p_nw_perf','c','一个数据包最大能装多少字节，常见 1500。',''],
+ ['p_nw_qos','QoS 服务质量','p_nw_perf','c','让视频通话等重要流量优先通行。',''],
+ ['p_nw_dig','nslookup','p_nw_perf','t','查询域名对应 IP 的命令行工具',''],
+ ['p_nw_iperf','iperf 测速工具','p_nw_perf','t','在两台机器间实测网络最大带宽的工具。',''],
+ ['p_nw_curl','curl','p_nw_perf','t','命令行里发 HTTP 请求、测试接口的工具。',''],
+ ['p_nw_symm','对称加密 AES','p_nw_crypto','c','加解密用同一把钥匙，速度快。',''],
+ ['p_nw_asym','公钥与私钥','p_nw_crypto','c','公钥加密、私钥解密，不必先共享秘密',''],
+ ['p_nw_hash','加密哈希 SHA-256','p_nw_crypto','c','把任意数据压成固定长度指纹，无法反推。',''],
+ ['p_nw_sign','数字签名','p_nw_crypto','c','用私钥签名，证明消息来源且未被改动。',''],
+ ['p_nw_cert','数字证书与 CA','p_nw_crypto','c','由权威机构担保的网站身份证明。',''],
+ ['p_nw_salt','加盐哈希存密码','p_nw_crypto','c','密码加随机数再哈希，防止被彩虹表破解。',''],
+ ['p_nw_2fa','双因素认证 2FA','p_nw_crypto','c','除密码外再要验证码或密钥才能登录。',''],
+ ['p_nw_e2e','端到端加密','p_nw_crypto','c','只有通信双方能解密，中间服务器也看不到。',''],
+ ['p_nw_ddos','DDoS 攻击','p_nw_attack','c','大量设备同时访问，把对方服务器挤垮。',''],
+ ['p_nw_phish','钓鱼攻击','p_nw_attack','c','伪装成正规网站或邮件，骗你交出密码。',''],
+ ['p_nw_sqli','SQL 注入','p_nw_attack','c','在输入框里夹带数据库命令，窃取或改动数据。',''],
+ ['p_nw_xss','XSS 跨站脚本','p_nw_attack','c','让网页执行攻击者塞进去的脚本。',''],
+ ['p_nw_brute','暴力破解','p_nw_attack','c','不停换密码一个个试',''],
+ ['p_nw_ransom','勒索软件','p_nw_attack','c','把文件加密后索要赎金的恶意程序。',''],
+ ['p_nw_zerotrust','零信任','p_nw_attack','c','不默认信任内网，每次访问都要验证身份。',''],
+ ['p_cs_arch','计算机组成','cs','c','计算机硬件怎么搭起来、怎么算东西的基础知识。',''],
+ ['p_cs_isa','指令集架构 ISA','p_cs_arch','c','规定处理器能听懂哪些指令的一套标准。',''],
+ ['p_cs_os','操作系统','cs','c','管理硬件、给程序分配资源的底层软件。',''],
+ ['p_cs_ds','数据结构与算法','cs','c','把数据组织好、把问题算得快的通用办法。',''],
+ ['p_cs_lang','编程语言与运行机制','cs','c','写程序用的语言，以及程序怎么变成能跑的东西。',''],
+ ['p_cs_db','数据库','cs','c','把数据存好、查得快、不丢不乱的系统。',''],
+ ['p_cs_par','并行与分布式','cs','c','让多个任务或多台机器一起干活的方法。',''],
+ ['p_cs_cpu','CPU 中央处理器','p_cs_arch','c','电脑的主运算核心，一条条执行指令。',''],
+ ['p_cs_gpu','GPU 图形处理器','p_cs_arch','c','擅长同时算海量简单运算，训练神经网络靠它。',''],
+ ['p_cs_ram','内存 RAM','p_cs_arch','c','程序运行时临时放数据的地方，断电就清空。',''],
+ ['p_cs_cache','缓存 Cache','p_cs_arch','c','CPU 旁边又小又快的存储，减少等内存的时间。',''],
+ ['p_cs_x86','x86','p_cs_isa','c','英特尔、AMD 电脑和服务器用的指令集。',''],
+ ['p_cs_arm','ARM 架构','p_cs_isa','c','手机和苹果电脑常用的低功耗指令集。',''],
+ ['p_cs_riscv','RISC-V','p_cs_isa','c','开放免费、任何人可自由使用的新指令集。',''],
+ ['p_cs_pipe','流水线','p_cs_cpu','c','让多条指令像流水线一样重叠执行',''],
+ ['p_cs_reg','寄存器','p_cs_cpu','c','CPU 内部最快的少量存储单元。',''],
+ ['p_cs_simd','SIMD 向量指令','p_cs_cpu','c','一条指令同时处理一批数据。',''],
+ ['p_cs_pcie','PCIe 总线','p_cs_arch','c','显卡、固态硬盘接主板用的高速通道。',''],
+ ['p_cs_dma','DMA 直接内存访问','p_cs_arch','c','外设不经过 CPU 直接读写内存。',''],
+ ['p_cs_ssd','固态硬盘 SSD','p_cs_arch','t','用闪存芯片存数据的硬盘，比机械硬盘快。',''],
+ ['p_cs_fpga','FPGA 可编程逻辑芯片','p_cs_arch','t','能反复改写内部电路的芯片。',''],
+ ['p_cs_cuda','CUDA','p_cs_gpu','t','英伟达提供的显卡通用并行计算平台。',''],
+ ['p_cs_proc','进程与线程','p_cs_os','c','进程是运行中的程序，线程是进程内的执行流。',''],
+ ['p_cs_sched','进程调度','p_cs_os','c','系统决定哪个任务什么时候用 CPU。',''],
+ ['p_cs_vmem','虚拟内存','p_cs_os','c','让每个程序以为自己独占一大块内存',''],
+ ['p_cs_fs','文件系统','p_cs_os','c','规定数据在硬盘上怎么存放、怎么找回的规则。',''],
+ ['p_cs_kernel','内核','p_cs_os','c','操作系统最核心、直接管硬件的那部分。',''],
+ ['p_cs_syscall','系统调用','p_cs_kernel','c','程序请求内核帮忙干活的正式入口。',''],
+ ['p_cs_driver','设备驱动','p_cs_kernel','c','让操作系统认识并控制某个硬件的程序。',''],
+ ['p_cs_irq','中断','p_cs_kernel','c','硬件打断 CPU，让它先处理紧急事件。',''],
+ ['p_cs_linux','Linux','p_cs_os','t','开源的操作系统内核，服务器和嵌入式都常用。',''],
+ ['p_cs_vm','虚拟化','p_cs_os','c','把一台电脑的硬件分给多个系统共用',''],
+ ['p_cs_deadlock','死锁','p_cs_os','c','几个任务互相等对方放手，谁也动不了。',''],
+ ['p_cs_array','数组与链表','p_cs_ds','c','两种最基本的连续或串联存数据的结构。',''],
+ ['p_cs_stack','栈与队列','p_cs_ds','c','后进先出与先进先出的两种存取规则。',''],
+ ['p_cs_hash','哈希表','p_cs_ds','c','用哈希函数直接定位，查找接近一步到位。',''],
+ ['p_cs_tree','树','p_cs_ds','c','一层层分叉的数据结构',''],
+ ['p_cs_graph','图','p_cs_ds','c','用点和边表示事物之间的关系。',''],
+ ['p_cs_heap','堆与优先队列','p_cs_ds','c','总能快速取出最大或最小元素的结构。',''],
+ ['p_cs_sort','排序算法','p_cs_ds','c','把数据按大小排好，如快速排序、归并排序。',''],
+ ['p_cs_bsearch','二分查找','p_cs_ds','c','在有序数据里每次砍掉一半来找目标。',''],
+ ['p_cs_bigo','时间复杂度与大 O','p_cs_ds','c','用数据量增长时的耗时趋势衡量算法快慢。',''],
+ ['p_cs_dp','动态规划','p_cs_ds','c','把大问题拆成重叠的小问题并记住结果。',''],
+ ['p_cs_recur','递归','p_cs_ds','c','函数调用自己来解决规模更小的同类问题。',''],
+ ['p_cs_greedy','贪心算法','p_cs_ds','c','每一步都选当前最优，希望整体也最优。',''],
+ ['p_cs_bfsdfs','广度优先搜索 BFS','p_cs_graph','c','从起点一层层向外遍历图',''],
+ ['p_cs_dijkstra','最短路径算法','p_cs_graph','c','如 Dijkstra，求图中两点间最短的路。',''],
+ ['p_cs_c','C 语言','p_cs_lang','t','贴近硬件、单片机和系统软件最常用的语言。',''],
+ ['p_cs_cpp','C++','p_cs_lang','t','在 C 基础上加了面向对象等特性的高性能语言。',''],
+ ['p_cs_py','Python','p_cs_lang','t','语法简洁、深度学习领域最常用的脚本语言。',''],
+ ['p_cs_java','Java','p_cs_lang','t','先编译成字节码再跑在虚拟机上的通用语言。',''],
+ ['p_cs_rust','Rust','p_cs_lang','t','不靠垃圾回收也能保证内存安全的系统语言。',''],
+ ['p_cs_go','Go 语言','p_cs_lang','t','谷歌推出、并发写起来简单的服务端语言。',''],
+ ['p_cs_asm','汇编语言','p_cs_lang','c','和机器指令一一对应的最底层文字写法。',''],
+ ['p_cs_compiler','编译器','p_cs_lang','c','把源代码整体翻译成机器能执行的程序。',''],
+ ['p_cs_interp','解释器','p_cs_lang','c','边读源代码边执行，不先生成完整程序。',''],
+ ['p_cs_ptr','指针','p_cs_lang','c','存放另一块数据在内存中地址的变量。',''],
+ ['p_cs_stackheap','栈内存与堆内存','p_cs_lang','c','程序用的两类内存，一类自动回收一类要手动管。',''],
+ ['p_cs_gc','垃圾回收 GC','p_cs_lang','c','运行时自动找出并释放不再使用的内存。',''],
+ ['p_cs_oop','面向对象编程','p_cs_lang','c','把数据和操作打包成对象，靠类和继承组织代码。',''],
+ ['p_cs_type','静态类型与动态类型','p_cs_lang','c','变量类型是编译时定死，还是运行时才确定。',''],
+ ['p_cs_sql','SQL','p_cs_db','c','用来增删改查关系型数据库的标准语言。',''],
+ ['p_cs_rdb','关系型数据库','p_cs_db','c','用表格和行列存数据的数据库，如 MySQL。',''],
+ ['p_cs_index','数据库索引','p_cs_db','c','像书的目录，让查询不用翻遍整张表。',''],
+ ['p_cs_acid','事务与 ACID','p_cs_db','c','一组操作要么全成功要么全不做的保证。',''],
+ ['p_cs_nosql','NoSQL 数据库','p_cs_db','c','不用传统表格的数据库，如键值型、文档型。',''],
+ ['p_cs_redis','Redis','p_cs_nosql','t','放在内存里的键值数据库，常当缓存用。',''],
+ ['p_cs_sqlite','SQLite','p_cs_rdb','t','一个文件就是一个数据库的轻量数据库。',''],
+ ['p_cs_mysql','MySQL','p_cs_rdb','t','最常用的开源关系型数据库',''],
+ ['p_cs_mongo','MongoDB','p_cs_nosql','t','用类似 JSON 的文档存数据的数据库。',''],
+ ['p_cs_vecdb','向量数据库','p_cs_db','c','专门按相似度检索嵌入向量的数据库。',''],
+ ['p_cs_concur','并发与并行','p_cs_par','c','并发是交替推进多件事，并行是真的同时做。',''],
+ ['p_cs_lock','锁与互斥','p_cs_par','c','防止多个线程同时改同一份数据的手段。',''],
+ ['p_cs_async','异步编程','p_cs_par','c','等待时先去干别的事，不堵住程序',''],
+ ['p_cs_mq','消息队列','p_cs_par','c','程序之间先把消息排队放着，对方有空再取。',''],
+ ['p_cs_kafka','Kafka','p_cs_mq','t','常用的高吞吐开源消息队列系统。',''],
+ ['p_cs_dist','分布式系统','p_cs_par','c','多台机器协同、对外像一台机器的系统。',''],
+ ['p_cs_cap','CAP 定理','p_cs_dist','c','分布式系统在一致、可用、容错间最多保两项。',''],
+ ['p_cs_raft','共识算法','p_cs_dist','c','让多台机器对同一件事达成一致',''],
+ ['p_cs_mapred','MapReduce','p_cs_dist','c','把大数据拆开分头算再汇总的处理模型。',''],
+ ['p_dv_vcs','版本控制与协作','dev','c','记录代码每次改动并支持多人协作的方法。',''],
+ ['p_dv_shell','命令行与开发环境','dev','c','用文字命令操作电脑并搭好开发环境。',''],
+ ['p_dv_pkg','包管理与依赖','dev','c','自动下载、安装、升级别人写好的代码库。',''],
+ ['p_dv_api','接口与数据格式','dev','c','程序之间交换数据的约定与格式。',''],
+ ['p_dv_ci','测试与持续交付','dev','c','让代码改动自动检验并自动发布的流程。',''],
+ ['p_dv_ops','服务器与上线部署','dev','c','把程序放到服务器上让别人能访问。',''],
+ ['p_dv_web','前后端框架','dev','c','搭网页和网站服务用的现成开发框架。',''],
+ ['p_dv_eng','工程规范与小工具','dev','c','写代码时反复用到的规范和通用技巧。',''],
+ ['p_dv_git','Git','p_dv_vcs','t','最流行的分布式代码版本管理工具。',''],
+ ['p_dv_branch','分支与合并','p_dv_vcs','c','在独立分支改代码，改好再并回主线。',''],
+ ['p_dv_conflict','合并冲突','p_dv_vcs','c','两人改了同一处代码，需要人工选保留谁。',''],
+ ['p_dv_pr','Pull Request','p_dv_vcs','c','请求把你的分支并入主线并让别人审核。',''],
+ ['p_dv_rebase','Git rebase','p_dv_git','c','把一串提交挪到另一个起点之后，让历史更直。',''],
+ ['p_dv_cli','Linux 命令行','p_dv_shell','c','用 ls、cd、grep 等文字命令操作系统。',''],
+ ['p_dv_bash','Bash 脚本','p_dv_shell','t','把一串命令写进文件，批量自动执行。',''],
+ ['p_dv_pipe','管道与重定向','p_dv_shell','c','把一个命令的输出接给下一个，或存进文件。',''],
+ ['p_dv_env','环境变量','p_dv_shell','c','系统里存放路径、密钥等设置的全局变量。',''],
+ ['p_dv_venv','虚拟环境','p_dv_shell','c','给每个项目隔离一套独立的库，互不干扰。',''],
+ ['p_dv_pip','pip','p_dv_pkg','t','Python 官方自带的第三方库安装工具。',''],
+ ['p_dv_conda','conda','p_dv_pkg','t','能同时管 Python 版本和各种库的环境工具。',''],
+ ['p_dv_npm','npm','p_dv_pkg','t','Node.js 世界的第三方包安装与管理工具。',''],
+ ['p_dv_apt','apt','p_dv_pkg','t','Ubuntu 等系统用来装软件的命令。',''],
+ ['p_dv_lock','依赖锁定文件','p_dv_pkg','c','记录所有库的精确版本，保证别处装出一样结果。',''],
+ ['p_dv_http','HTTP 请求','p_dv_api','c','GET、POST 等方式向服务器要数据',''],
+ ['p_dv_api1','API 接口','p_dv_api','c','程序对外提供功能的调用入口。',''],
+ ['p_dv_rest','REST 风格','p_dv_api','c','用网址加 GET、POST 等动作设计接口的风格。',''],
+ ['p_dv_json','JSON','p_dv_api','c','程序间交换数据最常用的文本格式',''],
+ ['p_dv_webhook','Webhook','p_dv_api','c','事件发生时由对方主动向你的网址推送消息。',''],
+ ['p_dv_unittest','单元测试','p_dv_ci','c','给最小的功能单元写自动检查代码。',''],
+ ['p_dv_pytest','pytest','p_dv_unittest','t','Python 里最常用的测试框架。',''],
+ ['p_dv_cicd','CI/CD 持续集成与交付','p_dv_ci','c','代码一提交就自动测试、打包、发布。',''],
+ ['p_dv_server','云服务器','p_dv_ops','t','按需租用的远程虚拟主机，如阿里云 ECS。',''],
+ ['p_dv_dns','域名','p_dv_ops','c','网站好记的名字，买来后解析到服务器',''],
+ ['p_dv_cert','HTTPS 证书申请','p_dv_ops','c','给网站办证书，如免费的 Let Encrypt。',''],
+ ['p_dv_k8s','Kubernetes','p_dv_ops','t','自动调度和管理一大批容器的编排系统。',''],
+ ['p_dv_compose','Docker Compose','p_dv_ops','t','用一个配置文件同时启动多个容器。',''],
+ ['p_dv_systemd','systemd 服务','p_dv_ops','t','让程序在 Linux 上开机自启、挂了自动重启。',''],
+ ['p_dv_react','React','p_dv_web','t','脸书推出、用组件搭网页界面的前端框架。',''],
+ ['p_dv_vue','Vue','p_dv_web','t','上手较容易的国产常用前端框架。',''],
+ ['p_dv_node','Node.js','p_dv_web','t','让 JavaScript 能在服务器上运行的环境。',''],
+ ['p_dv_ts','TypeScript','p_dv_web','t','给 JavaScript 加上类型检查的语言。',''],
+ ['p_dv_html','HTML','p_dv_web','c','网页的结构标记语言',''],
+ ['p_dv_flask','Flask','p_dv_web','t','轻量的 Python 网站后端框架',''],
+ ['p_dv_regex','正则表达式','p_dv_eng','c','用一套符号规则描述并匹配文本模式。',''],
+ ['p_dv_log','日志','p_dv_eng','c','程序运行时记录下来的事件，用来排查问题。',''],
+ ['p_dv_semver','语义化版本号','p_dv_eng','c','用 主.次.修订 三段数字表示版本变化大小。',''],
+ ['p_dv_license','开源协议','p_dv_eng','c','规定别人能否使用、修改代码，如 MIT、GPL。',''],
+ ['p_dv_debug','断点调试','p_dv_eng','c','让程序停在某一行，逐步查看变量变化。',''],
+ ['p_dv_lint','代码检查 Linter','p_dv_eng','c','自动扫描代码里的格式问题和常见错误。',''],
+ ['p_dv_review','代码评审','p_dv_eng','c','提交前让别人读一遍代码，找问题。',''],
+ ['p_ai_nn','神经网络基础','ai','c','由层层神经元组成、靠数据训练的模型。',''],
+ ['p_ai_arch','网络结构','ai','c','神经网络里各种经典的搭建方式。',''],
+ ['p_ai_train','训练技巧与数据','ai','c','让模型训得更好、更省数据的各种做法。',''],
+ ['p_ai_task','视觉任务','h_cv','c','让计算机从图像里完成的各类具体任务。',''],
+ ['p_ai_3d','三维视觉与定位','h_cv','c','从图像恢复三维结构和相机位置。',''],
+ ['p_ai_ind','工业视觉','h_cv','c','工厂里用相机做测量、检测和引导。',''],
+ ['p_ai_fw','框架工具与部署','ai','c','训练、转换和部署模型用的软件与硬件。',''],
+ ['p_ai_llm','大模型应用','h_llm','c','使用和改造大语言模型的常见概念。',''],
+ ['p_ai_bp','反向传播','p_ai_nn','c','从输出误差往回算每个参数的梯度。',''],
+ ['p_ai_gd','梯度下降','p_ai_nn','c','沿误差下降最快的方向一步步改参数。',''],
+ ['p_ai_adam','Adam 优化器','p_ai_nn','c','自动调节每个参数步长的常用优化方法。',''],
+ ['p_ai_loss','损失函数','p_ai_nn','c','衡量预测和真值差多远的数。',''],
+ ['p_ai_ce','交叉熵损失','p_ai_nn','c','分类任务最常用的损失函数。',''],
+ ['p_ai_act','激活函数','p_ai_nn','c','给网络加入非线性的函数，如 ReLU。',''],
+ ['p_ai_softmax','Softmax','p_ai_nn','c','把一组分数变成加起来为 1 的概率。',''],
+ ['p_ai_overfit','过拟合','p_ai_nn','c','训练集上很准，新数据上却不准。',''],
+ ['p_ai_reg','正则化','p_ai_nn','c','限制模型复杂度、防止过拟合的手段。',''],
+ ['p_ai_bn','BatchNorm 批归一化','p_ai_nn','c','按批对中间结果做标准化，加快训练。',''],
+ ['p_ai_dropout','Dropout','p_ai_nn','c','训练时随机丢掉部分神经元防过拟合。',''],
+ ['p_ai_lr','学习率','p_ai_nn','c','每一步参数改动的幅度。',''],
+ ['p_ai_lrsched','学习率调度','p_ai_nn','c','训练过程中按计划调整学习率。',''],
+ ['p_ai_vanish','梯度消失与爆炸','p_ai_nn','c','梯度逐层变得极小或极大，导致训不动。',''],
+ ['p_ai_init','权重初始化','p_ai_nn','c','训练前给参数设定合适的起始值。',''],
+ ['p_ai_conv','卷积运算','p_ai_nn','c','用小窗口在图上滑动，提取局部特征。',''],
+ ['p_ai_pool','池化','p_ai_nn','c','缩小特征图，保留主要信息。',''],
+ ['p_ai_cnn','卷积神经网络 CNN','p_ai_arch','c','靠卷积层提取图像特征的网络。',''],
+ ['p_ai_resid','残差连接','p_ai_arch','c','把输入直接加到输出，便于训练深网络。',''],
+ ['p_ai_resnet','ResNet','p_ai_arch','t','用残差连接的经典深层图像网络。',''],
+ ['p_ai_mobilenet','MobileNet','p_ai_arch','t','为手机等轻量设备设计的小网络。',''],
+ ['p_ai_effnet','EfficientNet','p_ai_arch','t','同时缩放深度、宽度和分辨率的高效网络。',''],
+ ['p_ai_unet','U-Net','p_ai_arch','t','编码解码加跳连的分割网络，医学图像常用。',''],
+ ['p_ai_fpn','特征金字塔 FPN','p_ai_arch','c','融合多尺度特征，兼顾大小目标。',''],
+ ['p_ai_rnn','循环神经网络 RNN','p_ai_arch','c','处理序列数据、带记忆的网络',''],
+ ['p_ai_attn','注意力机制','p_ai_arch','c','让模型自己决定关注输入的哪些部分。',''],
+ ['p_ai_transformer','Transformer','p_ai_arch','c','完全基于注意力的序列网络结构。',''],
+ ['p_ai_vit','ViT','p_ai_arch','t','把图像切块后交给 Transformer 的视觉模型。',''],
+ ['p_ai_swin','Swin Transformer','p_ai_arch','t','用滑动窗口注意力的层次化视觉模型。',''],
+ ['p_ai_gan','生成对抗网络 GAN','p_ai_arch','c','生成器和判别器互相对抗来学会生成。',''],
+ ['p_ai_diffusion','扩散模型','p_ai_arch','c','从噪声一步步去噪来生成图像的模型。',''],
+ ['p_ai_vae','变分自编码器 VAE','p_ai_arch','c','把数据压成概率分布再重建的生成模型。',''],
+ ['p_ai_autoenc','自编码器','p_ai_arch','c','先压缩再还原，学到紧凑的特征。',''],
+ ['p_ai_sd','Stable Diffusion','p_ai_arch','t','开源的文字生成图像扩散模型。',''],
+ ['p_ai_clip','CLIP','p_ai_arch','t','把图像和文字映射到同一空间的模型。',''],
+ ['p_ai_aug','数据增强','p_ai_train','c','对图像翻转、裁剪、调色，凭空增加样本。',''],
+ ['p_ai_tl','迁移学习','p_ai_train','c','把大数据上学到的知识用到新任务。',''],
+ ['p_ai_pretrain','预训练','p_ai_train','c','先在大规模数据上训练出通用模型。',''],
+ ['p_ai_ft','微调','p_ai_train','c','在预训练模型上用少量数据继续训练。',''],
+ ['p_ai_distill','知识蒸馏','p_ai_train','c','让小模型去学大模型的输出。',''],
+ ['p_ai_quant','模型量化','p_ai_train','c','把参数从浮点数换成低位整数以提速。',''],
+ ['p_ai_prune','模型剪枝','p_ai_train','c','删掉不重要的参数或通道来瘦身。',''],
+ ['p_ai_amp','混合精度训练','p_ai_train','c','部分计算用半精度，省显存、提速度。',''],
+ ['p_ai_label','数据标注','p_ai_train','c','给图像打上类别、框或掩膜。',''],
+ ['p_ai_imbal','类别不平衡','p_ai_train','c','某些类别的样本远少于其他类别。',''],
+ ['p_ai_split','训练集 / 验证集 / 测试集','p_ai_train','c','数据分三份，分别用来训练、调参、评估。',''],
+ ['p_ai_cv','交叉验证','p_ai_train','c','轮流留出一部分数据，检验结果是否稳定。',''],
+ ['p_ai_earlystop','早停','p_ai_train','c','验证集成绩不再变好就停止训练。',''],
+ ['p_ai_cls','图像分类','p_ai_task','c','判断整张图属于哪一类。',''],
+ ['p_ai_det','目标检测','p_ai_task','c','找出图中物体的位置和类别。',''],
+ ['p_ai_semseg','语义分割','p_ai_task','c','给每个像素标上所属类别。',''],
+ ['p_ai_instseg','实例分割','p_ai_task','c','区分同类的不同个体并给出轮廓。',''],
+ ['p_ai_kp','关键点检测','p_ai_task','c','找出人体或物体关键部位的位置',''],
+ ['p_ai_track','目标跟踪','p_ai_task','c','在视频里持续跟住同一个目标。',''],
+ ['p_ai_flow','光流','p_ai_task','c','估计相邻两帧里每个像素的运动。',''],
+ ['p_ai_depth','单目深度估计','p_ai_task','c','只用一张图推断每个点的远近。',''],
+ ['p_ai_ocr','OCR 文字识别','p_ai_task','c','把图像里的文字读成文本。',''],
+ ['p_ai_anom','异常检测','p_ai_task','c','只学正常样本，找出不正常的。',''],
+ ['p_ai_nms','非极大值抑制 NMS','p_ai_task','c','删掉检测结果里重复的框。',''],
+ ['p_ai_anchor','锚框','p_ai_task','c','预先设定的一批候选框模板。',''],
+ ['p_ai_iou','IoU 交并比','p_ai_task','c','预测框与真值框的重叠比例。',''],
+ ['p_ai_map','mAP','p_ai_task','c','检测任务综合精度的评价指标。',''],
+ ['p_ai_prf','精确率与召回率','p_ai_task','c','查得准和查得全，两个互相制衡的指标。',''],
+ ['p_ai_cm','混淆矩阵','p_ai_task','c','列出各类别预测对错数量的表。',''],
+ ['p_ai_rcnn','Faster R-CNN','p_ai_task','t','先提候选框再分类的两阶段检测器。',''],
+ ['p_ai_maskrcnn','Mask R-CNN','p_ai_task','t','在检测基础上加像素级掩膜的模型。',''],
+ ['p_ai_detr','DETR','p_ai_task','t','用 Transformer 直接输出检测框的模型。',''],
+ ['p_ai_sam','Segment Anything（SAM）','p_ai_task','t','Meta 推出的通用图像分割大模型。',''],
+ ['p_ai_bytetrack','ByteTrack','p_ai_task','t','连低分检测框也利用的多目标跟踪方法。',''],
+ ['p_ai_depthany','Depth Anything','p_ai_task','t','通用的单目深度估计大模型。',''],
+ ['p_ai_paddleocr','PaddleOCR','p_ai_task','t','百度开源的文字识别工具包。',''],
+ ['p_ai_patchcore','PatchCore','p_ai_task','t','基于预训练特征的工业异常检测方法。',''],
+ ['p_ai_recon','三维重建','p_ai_3d','c','由多张图像恢复物体的三维形状。',''],
+ ['p_ai_sfm','运动恢复结构 SfM','p_ai_3d','c','从无序照片同时求相机位置和三维点。',''],
+ ['p_ai_mvs','多视图立体 MVS','p_ai_3d','c','已知相机位置后，稠密还原物体表面。',''],
+ ['p_ai_epi','对极几何','p_ai_3d','c','描述两张图对应点之间的几何约束。',''],
+ ['p_ai_pnp','PnP 位姿求解','p_ai_3d','c','已知三维点和其图像点，求相机位姿。',''],
+ ['p_ai_ba','光束平差','p_ai_3d','c','同时优化相机位姿和三维点，使误差最小。',''],
+ ['p_ai_feat','特征点与描述子','p_ai_3d','c','找出图像中稳定、可匹配的点',''],
+ ['p_ai_vo','视觉里程计','p_ai_3d','c','靠连续图像估计相机自身运动，SLAM 前端。',''],
+ ['p_ai_pc','点云','p_ai_3d','c','用一堆带三维坐标的点表示场景。',''],
+ ['p_ai_icp','点云配准 ICP','p_ai_3d','c','把两片点云对齐到同一坐标系。',''],
+ ['p_ai_nerf','NeRF','p_ai_3d','t','用神经网络表示三维场景的新视角合成方法。',''],
+ ['p_ai_colmap','COLMAP','p_ai_3d','t','开源的 SfM 与稠密重建软件。',''],
+ ['p_ai_orbslam','ORB-SLAM','p_ai_3d','t','经典的特征点视觉 SLAM 系统。',''],
+ ['p_ai_open3d','Open3D','p_ai_3d','t','处理点云和三维数据的开源库。',''],
+ ['p_ai_pcl','PCL 点云库','p_ai_3d','t','处理点云的 C++ 开源库。',''],
+ ['p_ai_calib','相机标定','p_ai_ind','c','求相机的内参和畸变参数。',''],
+ ['p_ai_zhang','张正友标定法','p_ai_ind','c','用棋盘格多角度照片完成相机标定。',''],
+ ['p_ai_handeye','手眼标定','p_ai_ind','c','求相机与机械臂之间的坐标关系。',''],
+ ['p_ai_distort','镜头畸变','p_ai_ind','c','镜头让直线变弯的成像误差。',''],
+ ['p_ai_light','光源与打光','p_ai_ind','c','用合适的光照方式突出缺陷和边缘。',''],
+ ['p_ai_darkfield','明场与暗场照明','p_ai_ind','c','靠光线入射角度突出不同的表面特征。',''],
+ ['p_ai_indcam','工业相机','p_ai_ind','c','稳定、可触发、接口标准的专用相机。',''],
+ ['p_ai_arealine','面阵相机','p_ai_ind','c','一次拍下整张二维图像',''],
+ ['p_ai_shutter','全局快门与卷帘快门','p_ai_ind','c','整帧同时曝光，还是逐行曝光。',''],
+ ['p_ai_sensor','CMOS 传感器','p_ai_ind','c','现在最主流的图像传感器，省电便宜',''],
+ ['p_ai_dof','景深','p_ai_ind','c','画面里能保持清晰的前后距离范围。',''],
+ ['p_ai_telecentric','远心镜头','p_ai_ind','t','放大倍率不随距离变化的测量镜头。',''],
+ ['p_ai_halcon','Halcon','p_ai_ind','t','机器视觉领域常用的商用软件。',''],
+ ['p_ai_visionpro','VisionPro','p_ai_ind','t','康耐视公司的机器视觉软件。',''],
+ ['p_ai_opencv','OpenCV','p_ai_ind','t','最常用的开源计算机视觉库。',''],
+ ['p_ai_tmpl','模板匹配','p_ai_ind','c','拿标准图样在图中找相似的位置。',''],
+ ['p_ai_subpix','亚像素','p_ai_ind','c','把定位精度提高到不足一个像素。',''],
+ ['p_ai_canny','边缘检测（Canny）','p_ai_ind','c','找出图像里亮度突变的轮廓线。',''],
+ ['p_ai_thresh','二值化与阈值分割','p_ai_ind','c','按灰度把图像分成黑白两部分。',''],
+ ['p_ai_morph','形态学处理','p_ai_ind','c','用膨胀、腐蚀整理二值图的形状。',''],
+ ['p_ai_blob','Blob 分析','p_ai_ind','c','对连通区域统计面积、位置等特征。',''],
+ ['p_ai_flatfield','平场校正','p_ai_ind','c','校正光照和镜头造成的亮度不均。',''],
+ ['p_ai_pixelres','像素当量','p_ai_ind','c','一个像素对应真实世界多少毫米。',''],
+ ['p_ai_gige','GigE Vision','p_ai_ind','c','通过网线连接工业相机的通信标准。',''],
+ ['p_ai_structlight','结构光三维测量','p_ai_ind','c','投射图案，根据变形算出表面三维形状。',''],
+ ['p_ai_pytorch','PyTorch','p_ai_fw','t','最主流的开源深度学习框架之一。',''],
+ ['p_ai_tf','TensorFlow','p_ai_fw','t','谷歌推出的深度学习框架。',''],
+ ['p_ai_onnx','ONNX','p_ai_fw','t','不同框架之间通用的模型交换格式。',''],
+ ['p_ai_trt','TensorRT','p_ai_fw','t','NVIDIA 的模型推理加速库。',''],
+ ['p_ai_jetson','Jetson','p_ai_fw','t','NVIDIA 的嵌入式 AI 计算模块。',''],
+ ['p_ai_openvino','OpenVINO','p_ai_fw','t','英特尔的模型推理优化工具包。',''],
+ ['p_ai_ncnn','ncnn','p_ai_fw','t','腾讯开源的手机端神经网络推理框架。',''],
+ ['p_ai_hf','Hugging Face','p_ai_fw','t','模型和数据集的开源社区与代码库。',''],
+ ['p_ai_tb','TensorBoard','p_ai_fw','t','查看训练曲线的可视化工具。',''],
+ ['p_ai_labelimg','LabelImg','p_ai_fw','t','画检测框的开源图像标注软件。',''],
+ ['p_ai_cvat','CVAT','p_ai_fw','t','网页版、多人协作的图像视频标注工具。',''],
+ ['p_ai_albu','Albumentations','p_ai_fw','t','图像数据增强常用的开源库。',''],
+ ['p_ai_mmdet','MMDetection','p_ai_fw','t','OpenMMLab 开源的目标检测工具箱。',''],
+ ['p_ai_deploy','推理与部署','p_ai_fw','c','把训练好的模型放到设备上运行。',''],
+ ['p_ai_vram','GPU 显存','p_ai_fw','c','显卡上存放模型和数据的内存。',''],
+ ['p_ai_prompt','提示词 Prompt','p_ai_llm','c','给大模型的指令和上下文。',''],
+ ['p_ai_cot','思维链','p_ai_llm','c','让模型先写推理步骤，再给出答案。',''],
+ ['p_ai_rag','检索增强生成 RAG','p_ai_llm','c','先查资料，再让大模型据此回答。',''],
+ ['p_ai_embed','嵌入 Embedding','p_ai_llm','c','把文字或图片变成一串表示含义的数。',''],
+ ['p_ai_agent','智能体 Agent','p_ai_llm','c','能调用工具、分多步完成任务的大模型。',''],
+ ['p_ai_fc','函数调用','p_ai_llm','c','模型按格式输出要调用的工具和参数。',''],
+ ['p_ai_mcp','MCP 模型上下文协议','p_ai_llm','c','让大模型接入外部工具的统一协议。',''],
+ ['p_ai_mm','多模态','p_ai_llm','c','同时理解文字、图像、声音等多种信息。',''],
+ ['p_ai_token','Token','p_ai_llm','c','大模型把文字切成的小片段，也是计费单位。',''],
+ ['p_ai_ctx','上下文窗口','p_ai_llm','c','模型一次能读进去的最大文本长度。',''],
+ ['p_ai_hallu','幻觉','p_ai_llm','c','模型一本正经地编造不存在的内容。',''],
+ ['p_ai_rlhf','RLHF 人类反馈强化学习','p_ai_llm','c','用人类偏好打分来调教模型。',''],
+ ['p_ai_loraft','LoRA 低秩适配','p_ai_llm','c','只训练少量新增参数微调大模型，与LoRa通信无关。',''],
+ ['p_ai_temp','采样策略','p_ai_llm','c','大模型从候选词里挑下一个词的方式',''],
+ ['p_ai_moe','混合专家 MoE','p_ai_llm','c','每次只启用部分子网络的大模型结构。',''],
+ ['p_ai_ollama','Ollama','p_ai_llm','t','在本机运行开源大模型的工具。',''],
+ ['p_ai_whisper','Whisper','p_ai_llm','t','OpenAI 开源的语音转文字模型。',''],
+ ['p_ai_chatgpt','ChatGPT','p_ai_llm','t','OpenAI 推出的对话式大模型产品。',''],
+ ['p_ai_qwen','Qwen 通义千问','p_ai_llm','t','阿里巴巴开源的大模型系列。',''],
+ ['p_ai_deepseek','DeepSeek','p_ai_llm','t','深度求索公司推出的开源大模型系列。',''],
+ ['p_ai_langchain','LangChain','p_ai_llm','t','搭建大模型应用的开源框架。',''],
+ ['p_rb_est','状态估计与滤波','uav','c','用带噪声的传感器数据估计真实状态。',''],
+ ['p_rb_nav','定位导航与路径规划','uav','c','机器人知道自己在哪，并规划怎么走。',''],
+ ['p_rb_kin','运动学与姿态表示','uav','c','用数学描述物体的位置、朝向和运动。',''],
+ ['p_rb_arm','机械臂','uav','c','多关节机械臂的建模、规划与控制。',''],
+ ['p_rb_ctl','控制理论','h_ctrl','c','分析和设计反馈系统的经典与现代方法。',''],
+ ['p_rb_rl','学习型控制','h_ctrl','c','靠数据和试错学出控制策略。',''],
+ ['p_rb_tool','机器人软件与仿真工具','h_sim','c','机器人建模、仿真和调试用的软件。',''],
+ ['p_rb_kf','卡尔曼滤波','p_rb_est','c','综合模型预测和测量，估计最可能的状态。',''],
+ ['p_rb_ekf','扩展卡尔曼滤波 EKF','p_rb_est','c','把非线性系统在当前点线性化后做卡尔曼滤波。',''],
+ ['p_rb_ukf','无迹卡尔曼滤波 UKF','p_rb_est','c','用一组采样点传递非线性，不必求导。',''],
+ ['p_rb_cf','互补滤波','p_rb_est','c','陀螺仪管高频、加速度计管低频，加权融合。',''],
+ ['p_rb_pf','粒子滤波','p_rb_est','c','用大量随机样本近似状态的概率分布。',''],
+ ['p_rb_fusion','传感器融合','p_rb_est','c','把多个传感器的数据合成更可靠的估计。',''],
+ ['p_rb_attitude','姿态解算','p_rb_est','c','由陀螺、加速度计等算出机体朝向。',''],
+ ['p_rb_madgwick','Madgwick 滤波','p_rb_est','c','基于梯度下降的轻量姿态融合算法。',''],
+ ['p_rb_magcal','磁力计校准','p_rb_est','c','消除磁场干扰，让指南针读数准确。',''],
+ ['p_rb_lowpass','低通滤波','p_rb_est','c','滤掉高频噪声，保留缓慢变化的信号。',''],
+ ['p_rb_ekf2','PX4 EKF2','p_rb_est','t','PX4 自带的位置姿态扩展卡尔曼估计器。',''],
+ ['p_rb_slam','SLAM 同步定位与建图','p_rb_nav','c','边走边建地图，同时确定自己的位置。',''],
+ ['p_rb_vio','视觉惯性里程计 VIO','p_rb_nav','c','融合相机和 IMU 估计自身运动。',''],
+ ['p_rb_loop','回环检测','p_rb_nav','c','认出回到去过的地方，消除累计误差。',''],
+ ['p_rb_astar','A* 算法','p_rb_nav','c','带启发函数的最短路径搜索算法。',''],
+ ['p_rb_dijkstra','Dijkstra 算法','p_rb_nav','c','从起点向外逐层找最短路径的算法。',''],
+ ['p_rb_rrt','RRT 快速随机树','p_rb_nav','c','随机采样、逐步长出一棵探索树来找路。',''],
+ ['p_rb_apf','人工势场法','p_rb_nav','c','目标吸引、障碍排斥，沿合力方向走。',''],
+ ['p_rb_dwa','DWA 动态窗口法','p_rb_nav','c','在可达速度范围内采样，选最优速度避障。',''],
+ ['p_rb_gridmap','栅格地图','p_rb_nav','c','把空间切成方格，标记有无障碍。',''],
+ ['p_rb_minsnap','Minimum Snap 轨迹','p_rb_nav','c','四旋翼常用的平滑轨迹优化方法。',''],
+ ['p_rb_nav2','Nav2','p_rb_nav','t','ROS 2 里的移动机器人导航框架。',''],
+ ['p_rb_kinematics','运动学','p_rb_kin','c','只研究运动，不考虑力。',''],
+ ['p_rb_dynamics','动力学','p_rb_kin','c','研究力与运动之间的关系。',''],
+ ['p_rb_quat','四元数','p_rb_kin','c','用四个数表示旋转，没有万向锁。',''],
+ ['p_rb_euler','欧拉角','p_rb_kin','c','用滚转、俯仰、偏航三个角表示朝向。',''],
+ ['p_rb_gimbal','万向锁','p_rb_kin','c','欧拉角在俯仰 90 度时丢失一个自由度。',''],
+ ['p_rb_rotm','旋转矩阵','p_rb_kin','c','用 3×3 矩阵表示旋转。',''],
+ ['p_rb_homo','齐次变换矩阵','p_rb_kin','c','把旋转和平移合成一个 4×4 矩阵。',''],
+ ['p_rb_frames','坐标系与坐标变换','p_rb_kin','c','机体系、世界系等坐标系之间的换算',''],
+ ['p_rb_jac','雅可比矩阵','p_rb_kin','c','把关节速度换算成末端速度的矩阵。',''],
+ ['p_rb_newton','牛顿-欧拉方程','p_rb_kin','c','描述刚体受力与平动转动的基本方程。',''],
+ ['p_rb_lagr','拉格朗日动力学','p_rb_kin','c','用能量建立系统运动方程。',''],
+ ['p_rb_dof','自由度','p_rb_kin','c','描述系统运动所需的独立变量个数。',''],
+ ['p_rb_dh','DH 参数','p_rb_arm','c','用四个参数描述相邻关节的几何关系。',''],
+ ['p_rb_fk','正运动学','p_rb_arm','c','由各关节角算出末端的位置和姿态。',''],
+ ['p_rb_ik','逆运动学','p_rb_arm','c','由末端目标位置反推各关节角。',''],
+ ['p_rb_singular','奇异位形','p_rb_arm','c','机械臂在某方向失去运动能力的姿态。',''],
+ ['p_rb_traj','轨迹规划','p_rb_arm','c','规划随时间平滑变化的位置和速度。',''],
+ ['p_rb_impedance','阻抗控制','p_rb_arm','c','让机械臂像弹簧阻尼一样柔顺地接触。',''],
+ ['p_rb_force','力控制','p_rb_arm','c','控制机械臂与环境之间的接触力。',''],
+ ['p_rb_vs','视觉伺服','p_rb_arm','c','用相机图像反馈直接控制机器人运动。',''],
+ ['p_rb_collision','碰撞检测','p_rb_arm','c','判断机器人与障碍物是否相交。',''],
+ ['p_rb_moveit','MoveIt','p_rb_arm','t','ROS 里常用的机械臂运动规划框架。',''],
+ ['p_rb_urdf','URDF','p_rb_arm','t','描述机器人结构的 XML 文件格式。',''],
+ ['p_rb_ss','状态空间','p_rb_ctl','c','用一阶方程组描述系统的内部状态。',''],
+ ['p_rb_tf','传递函数','p_rb_ctl','c','描述输入到输出关系的频域函数。',''],
+ ['p_rb_laplace','拉普拉斯变换','p_rb_ctl','c','把微分方程变成代数方程的数学工具。',''],
+ ['p_rb_stab','稳定性','p_rb_ctl','c','受到扰动后系统能否回到平衡。',''],
+ ['p_rb_lyap','李雅普诺夫稳定性','p_rb_ctl','c','用类似能量的函数判断系统是否稳定。',''],
+ ['p_rb_bode','伯德图','p_rb_ctl','c','画出增益和相位随频率变化的曲线。',''],
+ ['p_rb_nyquist','奈奎斯特图','p_rb_ctl','c','用复平面曲线判断闭环是否稳定。',''],
+ ['p_rb_rootlocus','根轨迹','p_rb_ctl','c','增益变化时闭环极点的移动轨迹。',''],
+ ['p_rb_margin','相位裕度与增益裕度','p_rb_ctl','c','衡量系统离不稳定还有多远。',''],
+ ['p_rb_ctrb','可控性与可观性','p_rb_ctl','c','能否控制状态、能否由输出推断状态。',''],
+ ['p_rb_lqr','LQR','p_rb_ctl','c','按代价函数求最优状态反馈增益。',''],
+ ['p_rb_smc','滑模控制','p_rb_ctl','c','强迫状态滑向滑模面，抗干扰能力强。',''],
+ ['p_rb_adrc','自抗扰控制 ADRC','p_rb_ctl','c','把扰动估出来再抵消掉。',''],
+ ['p_rb_hinf','鲁棒控制','p_rb_ctl','c','模型有误差时仍能保证稳定。',''],
+ ['p_rb_adaptive','自适应控制','p_rb_ctl','c','控制器参数随工况自动调整。',''],
+ ['p_rb_ff','前馈控制','p_rb_ctl','c','按已知规律提前补偿，不等误差出现。',''],
+ ['p_rb_bandwidth','控制带宽','p_rb_ctl','c','系统能跟得上的最高信号频率。',''],
+ ['p_rb_step','阶跃响应','p_rb_ctl','c','看超调量、调节时间等性能指标。',''],
+ ['p_rb_indi','INDI 增量非线性动态逆','p_rb_ctl','c','用角加速度测量做增量式抗扰控制。',''],
+ ['p_rb_rl_core','强化学习','p_rb_rl','c','通过试错和奖励学出决策策略。',''],
+ ['p_rb_ppo','PPO','p_rb_rl','c','训练稳定、应用最广的策略梯度算法。',''],
+ ['p_rb_sac','SAC','p_rb_rl','c','带熵正则的离线策略强化学习算法。',''],
+ ['p_rb_dqn','DQN','p_rb_rl','c','用神经网络近似动作价值的强化学习算法。',''],
+ ['p_rb_reward','奖励函数设计','p_rb_rl','c','用数值告诉智能体什么行为是好的。',''],
+ ['p_rb_sim2real','仿真到现实迁移','p_rb_rl','c','把仿真里训好的策略用到真机上。',''],
+ ['p_rb_domainrand','域随机化','p_rb_rl','c','仿真时随机改物理参数，提高泛化能力。',''],
+ ['p_rb_il','模仿学习','p_rb_rl','c','学习专家示范的动作。',''],
+ ['p_rb_sb3','Stable-Baselines3','p_rb_rl','t','常用的强化学习算法库。',''],
+ ['p_rb_isaaclab','Isaac Lab','p_rb_rl','t','NVIDIA 基于 Isaac Sim 的机器人学习框架。',''],
+ ['p_rb_gym','Gymnasium','p_rb_rl','t','强化学习环境的标准接口库。',''],
+ ['p_rb_gazebo','Gazebo','p_rb_tool','t','常用的开源机器人三维物理仿真器。',''],
+ ['p_rb_rviz','RViz','p_rb_tool','t','ROS 里的三维可视化工具。',''],
+ ['p_rb_rosbag','rosbag','p_rb_tool','t','录制和回放 ROS 话题数据的工具。',''],
+ ['p_rb_rostf','TF 坐标变换树','p_rb_tool','t','ROS 里管理各坐标系相互关系的功能。',''],
+ ['p_rb_mavros','MAVROS','p_rb_tool','t','连接 ROS 与 MAVLink 飞控的桥接包。',''],
+ ['p_rb_mujoco','MuJoCo','p_rb_tool','t','擅长接触动力学的物理仿真引擎。',''],
+ ['p_rb_pybullet','PyBullet','p_rb_tool','t','易上手的开源物理仿真库。',''],
+ ['p_rb_airsim','AirSim','p_rb_tool','t','微软开源的无人机与车辆仿真器。',''],
+ ['p_rb_matlab','MATLAB','p_rb_tool','t','工程计算和控制设计常用的商业软件',''],
+ ['p_rb_plotjuggler','PlotJuggler','p_rb_tool','t','查看时间序列和飞行日志的可视化工具。',''],
+ ['p_rb_sitl','PX4 SITL 软件在环','p_rb_tool','c','不用真机，在电脑上运行飞控代码做仿真。',''],
+ ['p_rb_hitl','HITL 硬件在环','p_rb_tool','c','把真飞控板接入仿真环境做测试。',''],
+ ['p_me_mech','力学基础','mech','c','分析受力、变形和运动的基础学科。',''],
+ ['p_me_design','机械设计','mech','c','把零件和机构设计得能用又可靠的过程。',''],
+ ['p_me_mfg','制造工艺','mech','c','把图纸变成实物的各种加工方法。',''],
+ ['p_me_mat','工程材料','mech','c','做结构和零件用的金属、塑料、复合材料。',''],
+ ['p_me_cae','设计与仿真','mech','c','用软件建模、分析和优化结构的方法。',''],
+ ['p_me_drive','传动与驱动','mech','c','产生动力并传到执行部件的方式。',''],
+ ['p_me_fluid','流体与传热','mech','c','研究液体气体流动和热量传递的规律。',''],
+ ['p_me_thmech','理论力学','p_me_mech','c','研究物体受力平衡和运动的基础理论。',''],
+ ['p_me_matmech','材料力学','p_me_mech','c','研究杆件受力后的强度、刚度和稳定性。',''],
+ ['p_me_stress','应力与应变','p_me_mech','c','单位面积上的内力，以及相对变形量。',''],
+ ['p_me_modulus','弹性模量','p_me_mech','c','材料抵抗弹性变形的能力，单位 GPa。',''],
+ ['p_me_fatigue','疲劳','p_me_mech','c','反复受力后在低于屈服强度时断裂。',''],
+ ['p_me_buckle','屈曲','p_me_mech','c','细长受压件突然侧向弯曲失稳。',''],
+ ['p_me_vib','机械振动','p_me_mech','c','结构围绕平衡位置的往复运动。',''],
+ ['p_me_modal','模态分析','p_me_mech','c','求结构固有频率和振型的分析。',''],
+ ['p_me_conc','应力集中','p_me_mech','c','孔、圆角等处局部应力明显变大。',''],
+ ['p_me_sf','安全系数','p_me_mech','c','极限载荷与实际载荷之间留的余量倍数。',''],
+ ['p_me_fric','摩擦与磨损','p_me_mech','c','接触面相对运动时的阻力和材料损耗。',''],
+ ['p_me_gear','齿轮','p_me_design','t','靠轮齿啮合传递转矩和转速的零件。',''],
+ ['p_me_bearing','轴承','p_me_design','t','支撑转轴并减小转动摩擦的零件。',''],
+ ['p_me_coupling','联轴器','p_me_design','t','连接两根轴并传递转矩的零件。',''],
+ ['p_me_leadscrew','滚珠丝杠','p_me_design','t','把旋转变成精密直线运动的传动件。',''],
+ ['p_me_rail','直线导轨','p_me_design','t','引导部件沿直线低摩擦滑动的零件。',''],
+ ['p_me_spring','弹簧','p_me_design','t','靠弹性变形储能或缓冲的零件。',''],
+ ['p_me_thread','螺纹','p_me_design','c','螺栓螺母上的螺旋牙型及其标准。',''],
+ ['p_me_fit','公差配合','p_me_design','c','规定孔与轴尺寸偏差和松紧程度的标准。',''],
+ ['p_me_gdt','形位公差','p_me_design','c','限定形状、方向、位置误差的标注体系。',''],
+ ['p_me_ra','表面粗糙度','p_me_design','c','衡量加工表面微观高低不平的指标。',''],
+ ['p_me_draw','机械制图','p_me_design','c','用视图和尺寸标注表达零件的规范。',''],
+ ['p_me_key','键','p_me_design','t','把轮子固定在轴上传递转矩的零件',''],
+ ['p_me_dfm','可制造性设计','p_me_design','c','设计时就考虑加工和装配是否容易。',''],
+ ['p_me_turn','车削','p_me_mfg','c','工件旋转、刀具走直线的切削加工。',''],
+ ['p_me_mill','铣削','p_me_mfg','c','刀具旋转切削，加工平面和复杂型面。',''],
+ ['p_me_plane','刨削','p_me_mfg','c','刀具往复直线运动切削平面的加工。',''],
+ ['p_me_grind','磨削','p_me_mfg','c','用砂轮高精度磨光工件表面。',''],
+ ['p_me_cnc','数控加工 CNC','p_me_mfg','c','用程序控制机床自动加工零件。',''],
+ ['p_me_sheet','钣金','p_me_mfg','c','对薄金属板做切割、折弯、冲压。',''],
+ ['p_me_weld','焊接（弧焊）','p_me_mfg','c','加热使金属连接，如焊条电弧焊、氩弧焊。',''],
+ ['p_me_inj','注塑','p_me_mfg','c','把熔融塑料注入模具成型。',''],
+ ['p_me_cast','铸造','p_me_mfg','c','把熔融金属浇入铸型凝固成零件。',''],
+ ['p_me_fdm','FDM 3D 打印','p_me_mfg','c','熔融挤出塑料丝逐层堆积成型。',''],
+ ['p_me_sla','SLA 光固化打印','p_me_mfg','c','用紫外光逐层固化液态树脂成型。',''],
+ ['p_me_cf','碳纤维成型','p_me_mfg','c','铺层、固化制作碳纤维制件的工艺。',''],
+ ['p_me_heat','热处理','p_me_mfg','c','加热冷却改变金属组织和硬度。',''],
+ ['p_me_wedm','线切割','p_me_mfg','c','用放电的细丝切割导电材料。',''],
+ ['p_me_anod','阳极氧化','p_me_mfg','c','在铝表面生成氧化膜，还可染色。',''],
+ ['p_me_cal','游标卡尺','p_me_mfg','t','测长度、孔径和深度的常用量具。',''],
+ ['p_me_cmm','三坐标测量','p_me_mfg','c','用探头测空间点坐标来检测零件尺寸。',''],
+ ['p_me_al','铝合金','p_me_mat','c','轻、易加工，无人机结构常用金属。',''],
+ ['p_me_6061','6061 铝合金','p_me_al','t','通用型铝合金，易加工、可焊接。',''],
+ ['p_me_7075','7075 铝合金','p_me_al','t','高强度铝合金，常用于受力件。',''],
+ ['p_me_ti','钛合金','p_me_mat','c','强度高、耐腐蚀、密度比钢低的金属。',''],
+ ['p_me_steel','钢材','p_me_mat','c','铁碳合金，强度高，用量最大的金属。',''],
+ ['p_me_comp','复合材料','p_me_mat','c','两种以上材料复合，兼顾轻和强。',''],
+ ['p_me_cfplate','碳纤维板','p_me_comp','t','碳纤维布和树脂压成的轻质高刚度板。',''],
+ ['p_me_gf','玻璃纤维','p_me_comp','t','比碳纤维便宜的复合材料增强纤维。',''],
+ ['p_me_plastic','工程塑料','p_me_mat','c','强度和耐热较好的结构用塑料。',''],
+ ['p_me_pa','尼龙 PA','p_me_plastic','t','耐磨耐冲击的工程塑料。',''],
+ ['p_me_abs','ABS','p_me_plastic','t','常用于注塑和 3D 打印的抗冲塑料。',''],
+ ['p_me_pla','PLA','p_me_plastic','t','最常用的 FDM 打印耗材，好打但怕热',''],
+ ['p_me_epp','EPP 泡沫','p_me_mat','t','轻质耐摔的泡沫，常做固定翼机身。',''],
+ ['p_me_fea','有限元分析','p_me_cae','c','把结构切成小单元，求应力和变形。',''],
+ ['p_me_cfd','计算流体力学 CFD','p_me_cae','c','用数值方法模拟流体流动。',''],
+ ['p_me_topo','拓扑优化','p_me_cae','c','自动找出用料最少且刚度够的结构。',''],
+ ['p_me_sw','SolidWorks','p_me_cae','t','常用的三维机械建模软件。',''],
+ ['p_me_acad','AutoCAD','p_me_cae','t','通用二维制图软件。',''],
+ ['p_me_ansys','ANSYS','p_me_cae','t','综合性有限元与流体仿真软件。',''],
+ ['p_me_abaqus','ABAQUS','p_me_cae','t','擅长非线性问题的有限元软件。',''],
+ ['p_me_fusion','Fusion 360','p_me_cae','t','集建模、仿真和加工于一体的云端软件。',''],
+ ['p_me_openfoam','OpenFOAM','p_me_cae','t','开源的计算流体力学软件。',''],
+ ['p_me_slicer','切片软件','p_me_cae','t','把三维模型转成打印路径，如 Cura。',''],
+ ['p_me_hyd','液压传动','p_me_drive','c','用液体压力传递动力。',''],
+ ['p_me_pneu','气动','p_me_drive','c','用压缩空气驱动执行元件。',''],
+ ['p_me_stepper','步进电机','p_me_drive','t','按脉冲一步一步转动的电机。',''],
+ ['p_me_servo','伺服电机','p_me_drive','t','带反馈、能精确控制位置和速度的电机。',''],
+ ['p_me_bldc','无刷直流电机 BLDC','p_me_drive','t','电子换向的电机，无人机动力主流。',''],
+ ['p_me_rcservo','舵机','p_me_drive','t','航模常用的小型角度执行器。',''],
+ ['p_me_reducer','减速器','p_me_drive','t','降低转速、放大转矩的传动装置。',''],
+ ['p_me_planet','行星减速器','p_me_reducer','t','结构紧凑、承载大的减速器。',''],
+ ['p_me_belt','同步带传动','p_me_drive','t','齿形带传动，不打滑且较安静。',''],
+ ['p_me_bern','伯努利方程','p_me_fluid','c','描述流速与压强关系的能量守恒式。',''],
+ ['p_me_re','雷诺数','p_me_fluid','c','判断层流还是湍流的无量纲数。',''],
+ ['p_me_lamin','层流与湍流','p_me_fluid','c','流体分层平稳流动，或杂乱涡动。',''],
+ ['p_me_bl','边界层','p_me_fluid','c','贴近壁面、速度从零逐渐增大的薄流层。',''],
+ ['p_me_pipe','压力损失','p_me_fluid','c','流体流过管路或障碍时的压强下降。',''],
+ ['p_me_ht','传热学','p_me_fluid','c','热传导、对流、辐射三种传热规律。',''],
+ ['p_me_cool','散热设计','p_me_fluid','c','把发热元件的热量导出去的方法。',''],
+ ['p_el_circuit','电路基础','embedded','c','电流、电压和常见元件的基本规律。',''],
+ ['p_el_power','电源与电池','embedded','c','给电路供电并保护电池的知识。',''],
+ ['p_el_pcb','PCB 设计与焊接','embedded','c','把电路做成电路板并焊接的流程。',''],
+ ['p_el_tool','电子测量仪器','embedded','c','测电压、波形和信号的工具。',''],
+ ['p_el_mcu','单片机进阶','mcu','c','中断、定时器等单片机核心机制。',''],
+ ['p_el_board','芯片与开发板','embedded','c','常见处理器芯片与现成开发板。',''],
+ ['p_el_ohm','欧姆定律','p_el_circuit','c','电压等于电流乘电阻。',''],
+ ['p_el_kcl','基尔霍夫定律','p_el_circuit','c','节点电流之和为零，回路电压之和为零。',''],
+ ['p_el_res','电阻','p_el_circuit','t','限制电流的最基本元件。',''],
+ ['p_el_cap','电容','p_el_circuit','t','储存电荷，用于滤波和去耦的元件。',''],
+ ['p_el_ind','电感','p_el_circuit','t','储存磁能、抑制电流突变的元件。',''],
+ ['p_el_diode','二极管','p_el_circuit','t','只允许电流单向通过的元件。',''],
+ ['p_el_bjt','三极管','p_el_circuit','t','用小电流控制大电流的放大开关元件。',''],
+ ['p_el_mos','MOS 管','p_el_circuit','t','用电压控制通断的开关元件。',''],
+ ['p_el_opamp','运算放大器','p_el_circuit','t','放大微弱模拟信号的通用芯片。',''],
+ ['p_el_pull','上拉与下拉电阻','p_el_circuit','c','让悬空引脚保持确定的高或低电平。',''],
+ ['p_el_divider','分压电路','p_el_circuit','c','用两个电阻按比例降低电压。',''],
+ ['p_el_decoup','去耦电容','p_el_circuit','c','靠近芯片放置，抑制电源噪声。',''],
+ ['p_el_rc','RC 滤波','p_el_circuit','c','电阻加电容，滤掉高频噪声。',''],
+ ['p_el_shift','电平转换','p_el_circuit','c','让 3.3 V 和 5 V 器件能互相对接。',''],
+ ['p_el_opto','光耦','p_el_circuit','t','用光传递信号，实现电气隔离。',''],
+ ['p_el_vi','电压、电流与功率','p_el_power','c','功率等于电压乘电流，单位 W。',''],
+ ['p_el_ldo','LDO 线性稳压器','p_el_power','t','压差小、噪声低但发热较大的稳压芯片。',''],
+ ['p_el_dcdc','DC-DC 开关电源','p_el_power','t','效率高的升压或降压电源芯片。',''],
+ ['p_el_buck','Buck 降压电路','p_el_power','c','开关电源里把电压降低的基本电路',''],
+ ['p_el_lipo','锂聚合物电池 LiPo','p_el_power','t','航模常用的高放电倍率软包电池。',''],
+ ['p_el_18650','18650 锂电池','p_el_power','t','直径 18 mm、长 65 mm 的圆柱锂电池。',''],
+ ['p_el_bms','电池管理系统 BMS','p_el_power','t','监控电压、均衡并保护电池组的电路。',''],
+ ['p_el_crate','放电倍率 C 数','p_el_power','c','电池电流相对于容量的倍数。',''],
+ ['p_el_sp','串并联 S/P 数','p_el_power','c','3S 表示三节电芯串联，电压相加。',''],
+ ['p_el_tp4056','TP4056','p_el_power','t','低成本的单节锂电池充电芯片。',''],
+ ['p_el_fuse','保险丝','p_el_power','c','电流过大时熔断，保护电路',''],
+ ['p_el_ripple','纹波','p_el_power','c','直流电压上叠加的小幅波动。',''],
+ ['p_el_sch','原理图','p_el_pcb','c','用符号表示元件和连线的电路图。',''],
+ ['p_el_layout','PCB 布线','p_el_pcb','c','在板上摆放元件并走铜线。',''],
+ ['p_el_lceda','立创 EDA','p_el_pcb','t','国产在线电路设计软件，对接嘉立创。',''],
+ ['p_el_kicad','KiCad','p_el_pcb','t','开源免费的电路设计软件。',''],
+ ['p_el_altium','Altium Designer','p_el_pcb','t','企业常用的专业电路设计软件。',''],
+ ['p_el_jlc','嘉立创打样','p_el_pcb','t','低价快速制作 PCB 的国内厂家服务。',''],
+ ['p_el_foot','封装','p_el_pcb','c','元件在板上的焊盘形状和尺寸。',''],
+ ['p_el_smd','贴片元件 SMD','p_el_pcb','t','直接焊在板面上的小型元件。',''],
+ ['p_el_solder','电子焊接','p_el_pcb','c','用烙铁或回流焊连接元件与焊盘。',''],
+ ['p_el_reflow','回流焊','p_el_pcb','c','加热锡膏，让元件整体焊上。',''],
+ ['p_el_iron','电烙铁','p_el_pcb','t','手工焊接用的加热工具。',''],
+ ['p_el_gnd','接地','p_el_pcb','c','给电路一个公共的零电位参考',''],
+ ['p_el_emc','电磁兼容 EMC','p_el_pcb','c','设备既不干扰别人，也不被干扰。',''],
+ ['p_el_via','过孔','p_el_pcb','c','连接不同层铜线的金属化孔。',''],
+ ['p_el_bom','BOM 物料清单','p_el_pcb','c','列出所有元件型号和数量的清单。',''],
+ ['p_el_dmm','万用表','p_el_tool','t','测电压、电流、电阻和通断。',''],
+ ['p_el_scope','示波器','p_el_tool','t','显示电压随时间变化的波形。',''],
+ ['p_el_la','逻辑分析仪','p_el_tool','t','抓取数字信号并解码总线数据。',''],
+ ['p_el_psu','可调电源','p_el_tool','t','可设定电压和限流，并显示电流',''],
+ ['p_el_siggen','信号发生器','p_el_tool','t','产生设定波形的测试信号源。',''],
+ ['p_el_usbm','USB 功率计','p_el_tool','t','串在 USB 口上测电压和电流。',''],
+ ['p_el_thermal','热成像仪','p_el_tool','t','用红外测量表面温度分布。',''],
+ ['p_el_spec','频谱分析仪','p_el_tool','t','显示信号各频率成分的强度。',''],
+ ['p_el_timer','定时器','p_el_mcu','c','计时、产生 PWM、捕获脉冲的外设。',''],
+ ['p_el_dma','DMA 直接存储器访问','p_el_mcu','c','不占用 CPU 就能搬运数据的机制。',''],
+ ['p_el_adc','ADC 模数转换','p_el_mcu','c','把电压转成数字量。',''],
+ ['p_el_dac','DAC 数模转换','p_el_mcu','c','把数字量转成电压。',''],
+ ['p_el_wdt','看门狗','p_el_mcu','c','程序卡死时自动复位的保护机制。',''],
+ ['p_el_boot','Bootloader','p_el_mcu','c','上电先运行、负责加载应用程序的小程序。',''],
+ ['p_el_swd','JTAG 调试接口','p_el_mcu','c','经典的芯片下载程序和调试接口',''],
+ ['p_el_lowp','低功耗模式','p_el_mcu','c','睡眠并关闭部分外设来省电。',''],
+ ['p_el_xtal','晶振','p_el_mcu','c','给芯片提供稳定的基准时钟',''],
+ ['p_el_flash','Flash 与 RAM','p_el_mcu','c','程序存在 Flash，变量运行在 RAM。',''],
+ ['p_el_stlink','ST-Link','p_el_mcu','t','意法半导体的下载调试器。',''],
+ ['p_el_openocd','OpenOCD','p_el_mcu','t','开源的片上调试与烧录软件。',''],
+ ['p_el_gcc','arm-none-eabi-gcc','p_el_mcu','t','ARM 单片机常用的开源编译工具链。',''],
+ ['p_el_rpi','树莓派','p_el_board','t','能跑 Linux 的信用卡大小小电脑。',''],
+ ['p_el_uno','Arduino Uno','p_el_board','t','入门最常用的 ATmega328P 开发板。',''],
+ ['p_el_nrf','nRF52','p_el_board','t','Nordic 公司的低功耗蓝牙芯片系列。',''],
+ ['p_el_rp2040','RP2040','p_el_board','t','树莓派自研的双核 Cortex-M0+ 芯片。',''],
+ ['p_el_teensy','Teensy','p_el_board','t','体积小、速度快的 Cortex-M7 开发板。',''],
+ ['p_el_fpga','FPGA','p_el_board','t','可重新配置硬件电路的可编程芯片。',''],
+ ['p_el_cortex','ARM Cortex-M','p_el_board','c','单片机最常用的 ARM 内核系列。',''],
+ ['p_el_8051','51 单片机','p_el_board','t','经典入门的 8 位单片机。',''],
+ ['p_el_bread','面包板','p_el_board','t','不用焊接就能搭临时电路的板子。',''],
+ ['p_el_can','CAN 总线','h_bus','c','汽车和机器人常用的抗干扰总线。',''],
+ ['p_el_usb','USB 接口','h_bus','c','通用串行总线，既传数据又供电。',''],
+ ['p_el_diff','差分信号','h_bus','c','用两根线的电压差传信号，抗干扰强。',''],
+];
+const PROFILE='（未填写）';
+const KNOW=['没听过','听说过·不太懂','熟悉'];
+const ORDER=['wireless','netsec','cs','embedded','iot','dev','ai','uav','mech'];
+
+/* ---------- 数据 ---------- */
+// DEF：网页自带的全部词条（预置 + 你项目里的 + 通用词条）；Claude 新加的另存在状态里
+const DEF=new Map();
+for(const [id,label,parent,kind,desc,spec,asked] of SEED) DEF.set(id,{id,label,parent,kind,desc,spec,asked:!!asked});
+for(const [id,label,parent,kind,desc,src] of [...CANDS,...POOL,...SPLIT]) if(!DEF.has(id)) DEF.set(id,{id,label,parent,kind,desc,src:src||''});
+let nodes=new Map(), links=[], focus='lora', seq=0, mode='view';
+const busy=new Set();
+
+function lvl(n){let k=0;while(n.parent&&k<20){n=nodes.get(n.parent);k++}return k}
+function grp(n){let k=0;while(n.kind!=='d'&&n.parent&&k++<20) n=nodes.get(n.parent); return DOM[n.id]?n.id:'iot'}
+// 状态：n＝每个节点的 {s 显示, k 了解程度, st 关注, e 拓展过, c 冷度, f 收起}；ai＝Claude 加的节点；x＝Claude 加的联系
+function build(st){
+  nodes=new Map(); links=[];
+  for(const d of [...DEF.values(),...((st&&st.ai)||[])]) if(!nodes.has(d.id)) nodes.set(d.id,{...d,know:d.asked?1:0,star:false,shown:START.has(d.id)||!!d.asked});
+  for(const n of nodes.values()) if(n.parent&&!nodes.has(n.parent)) n.parent=null;
+  for(const n of nodes.values()) if(n.parent) links.push({s:n.parent,t:n.id});
+  for(const [s,t,note] of CROSS) links.push({s,t,note,cross:1});
+  for(const l of (st&&st.x)||[]) if(nodes.has(l.s)&&nodes.has(l.t)) links.push({s:l.s,t:l.t,note:l.note,cross:1,ai:1});
+  if(st&&st.n) for(const n of nodes.values()){const v=st.n[n.id]||{}; n.shown=!!v.s; n.know=v.k|0; n.star=!!v.st; n.expanded=!!v.e; n.cold=v.c|0; n.folded=!!v.f;}
+  for(const n of nodes.values()){n.level=lvl(n); n.group=grp(n)}
+  for(const n of nodes.values()) if(n.shown){let p=n.parent&&nodes.get(n.parent);while(p&&!p.shown){p.shown=true;p.folded=false;p=p.parent&&nodes.get(p.parent)}}  // 上图的节点，上级也得在图上
+  if(st){focus=nodes.has(st.focus)?st.focus:'lora'; seq=st.seq|0; mode=st.mode||'view'}
+}
+function snapshot(){
+  const n={};
+  for(const x of nodes.values()){const v={s:x.shown?1:0,k:x.know|0,st:x.star?1:0,e:x.expanded?1:0,c:x.cold|0,f:x.folded?1:0};
+    const w=Object.fromEntries(Object.entries(v).filter(e=>e[1])); if(Object.keys(w).length) n[x.id]=w;}
+  return {v:2,n,
+    ai:[...nodes.values()].filter(x=>x.ai).map(({id,label,parent,kind,desc,spec,src})=>({id,label,parent,kind,desc,spec,src,ai:1})),
+    x:links.filter(l=>l.ai).map(({s,t,note})=>({s,t,note})), focus, seq, mode};
+}
+// 旧版（只有「听说过」一档）的存档：听说过 → 听说过·不太懂
+function fromV1(o){
+  const st={n:{},ai:[],x:[],focus:o.f,seq:o.q,mode:o.m==='heard'?'k1':(o.m||'view')};
+  for(const n of o.n||[]){
+    if(!DEF.has(n.id)) st.ai.push({id:n.id,label:n.label,parent:n.parent,kind:n.kind||'c',desc:n.desc,spec:n.spec,src:n.src,ai:1});
+    st.n[n.id]={s:n.shown?1:0,k:n.heard?1:0,st:n.star?1:0,e:n.expanded?1:0,c:n.cold|0,f:n.folded?1:0};
+  }
+  for(const l of o.l||[]) if(l.cross&&!CROSS.some(c=>c[0]===l.s&&c[1]===l.t)) st.x.push({s:l.s,t:l.t,note:l.note});
+  return st;
+}
+// 合并另一份存档：了解程度取高的，关注、显示取并集，不会让你丢标记
+function mergeIn(o){
+  const st=o&&o.v===2?o:fromV1(o), cur=snapshot();
+  for(const a of st.ai||[]) if(!DEF.has(a.id)&&!cur.ai.some(b=>b.id===a.id)) cur.ai.push(a);
+  for(const x of st.x||[]) if(!cur.x.some(y=>y.s===x.s&&y.t===x.t)) cur.x.push(x);
+  for(const [id,v] of Object.entries(st.n||{})){const c=cur.n[id]||{};
+    cur.n[id]={s:(c.s||v.s)?1:0,k:Math.max(c.k|0,v.k|0),st:(c.st||v.st)?1:0,e:(c.e||v.e)?1:0,c:Math.min(c.c|0,v.c|0),f:(c.f&&v.f)?1:0};}
+  cur.seq=Math.max(cur.seq|0,st.seq|0); build(cur);
+}
+
+/* ---------- 保存与同步：本浏览器 + Artifact 云端（有就用） ---------- */
+const LS='kg-iot-v2';
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+{const v2=lsGet(LS), v1=lsGet('kg-iot-v1'); build(v2||(v1?fromV1(v1):null));}
+let dbRef=null, lastJSON='', myT=0, saveT=0, writing=false, again=false;
+const setSync=t=>{document.getElementById('sync').textContent=t};
+function save(){ lsSet(LS,snapshot()); if(dbRef){clearTimeout(saveT); saveT=setTimeout(flush,1200)} }
+async function flush(){
+  if(writing){again=true;return} writing=true;
+  try{const s=snapshot(), j=JSON.stringify(s); if(j!==lastJSON){myT=Date.now(); await dbRef.set({...s,t:myT}); lastJSON=j; setSync('已同步到云端')}}
+  catch(e){setSync(e.code==='quota_exceeded'?'云端空间满了，请先导出 JSON':'云端同步失败，标记暂存在本浏览器')}
+  finally{writing=false; if(again){again=false;flush()}}
+}
+function applyRemote(st,msg){build(st); lastJSON=JSON.stringify(snapshot()); myT=st.t; redraw(); setSync(msg)}
+window.claude?.use?.('db').then(async d=>{
+  if(!d) return; const ref=d.doc('graph/state');
+  try{
+    const snap=await ref.get(); dbRef=ref;
+    if(snap.exists){ const st=snap.data(); const local=lsGet(LS);
+      build(st); if(local) mergeIn(local);   // 本机还有没上传的标记，合并进去
+      lastJSON=JSON.stringify(st.v?{v:st.v,n:st.n,ai:st.ai,x:st.x,focus:st.focus,seq:st.seq,mode:st.mode}:{}); myT=st.t; redraw(); setSync('已从云端载入'); save(); }
+    else { await flush(); }
+    ref.onSnapshot(sn=>{ if(!sn.exists||sn.metadata.hasPendingWrites) return; const st=sn.data(); if(st.t===myT) return; applyRemote(st,'其他设备有更新，已同步'); },()=>{});
+  }catch(e){ dbRef=null; setSync('云端暂时连不上，标记暂存在本浏览器'); }
+}).catch(()=>{});
+// 单独放到网站上时：本浏览器没有存档，就读同目录的 graph.json
+if(!window.claude&&!lsGet(LS)&&!lsGet('kg-iot-v1')) fetch('graph.json').then(r=>r.ok?r.json():null).then(st=>{if(st){build(st.v===2?st:fromV1(st));redraw();setSync('已从 graph.json 载入')}}).catch(()=>{});
+
+/* ---------- 图 ---------- */
+const svg=d3.select('#g'), root=svg.append('g'), linkG=root.append('g'), nodeG=root.append('g');
+svg.call(d3.zoom().scaleExtent([.15,3]).on('zoom',e=>root.attr('transform',e.transform))).on('dblclick.zoom',null);
+const R=n=>n.kind==='d'?(n.id==='iot'?26:20):n.kind==='t'?(n.asked?15:8):(n.asked?17:10);
+const sim=d3.forceSimulation()
+  .force('link',d3.forceLink().id(d=>d.id).distance(l=>l.cross?150:l.target.kind==='d'||l.target.asked?100:62).strength(l=>l.cross?.04:.7))
+  .force('charge',d3.forceManyBody().strength(-300))
+  .force('collide',d3.forceCollide(d=>R(d)+16))
+  .force('x',d3.forceX().strength(.04)).force('y',d3.forceY().strength(.04))
+  .on('tick',()=>{
+    linkG.selectAll('line').attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    nodeG.selectAll('g.n').attr('transform',d=>`translate(${d.x},${d.y})`);
+  });
+const fit=()=>{const r=document.getElementById('stage').getBoundingClientRect();svg.attr('viewBox',[-r.width/2,-r.height/2,r.width,r.height])};
+new ResizeObserver(fit).observe(document.getElementById('stage')); fit();
+function redraw(){nodeG.selectAll('*').remove();linkG.selectAll('*').remove();render()}
+
+function render(){
+  const vis=[...nodes.values()].filter(n=>n.shown), ids=new Set(vis.map(n=>n.id));
+  const ls=links.filter(l=>ids.has(l.s)&&ids.has(l.t)).map(l=>({source:l.s,target:l.t,cross:l.cross,k:l.s+'>'+l.t,a:l.s,b:l.t}));
+  const cold=id=>nodes.get(id).cold===1;
+  linkG.selectAll('line').data(ls,d=>d.k).join('line').attr('class',d=>(d.cross?'l cross':'l')+(cold(d.a)||cold(d.b)?' cold':''));
+  const g=nodeG.selectAll('g.n').data(vis,d=>d.id).join(enter=>{
+    const g=enter.append('g').attr('tabindex',0).attr('role','button')
+      .call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.2).restart();d.fx=d.x;d.fy=d.y})
+        .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=d.fy=null}))
+      .on('click',(e,d)=>hit(d)).on('keydown',(e,d)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();hit(d)}});
+    // 具体东西画方块，概念和领域画圆
+    g.each(function(d){const s=d3.select(this),r=R(d),sq=d.kind==='t';
+      s.append(sq?'rect':'circle').attr('class','halo').call(sq?x=>x.attr('x',-r-6).attr('y',-r-6).attr('width',2*r+12).attr('height',2*r+12).attr('rx',5):x=>x.attr('r',r+6));
+      s.append(sq?'rect':'circle').attr('class','dot').call(sq?x=>x.attr('x',-r).attr('y',-r).attr('width',2*r).attr('height',2*r).attr('rx',3):x=>x.attr('r',r));
+      s.append('text').attr('text-anchor','middle').attr('y',r+15)});
+    return g;
+  });
+  g.attr('class',d=>`n k${d.know|0}${d.kind==='d'?' domain':''}${d.star?' star':''}${d.asked?' asked':''}${d.id===focus?' focus':''}${busy.has(d.id)?' busy':''}${d.cold===1?' cold':''}`)
+   .attr('style',d=>`--c:var(--${d.group})`).attr('aria-label',d=>d.label+'，'+KNOW[d.know|0]);
+  g.select('text').text(d=>(d.star?'★ ':'')+d.label);
+  sim.nodes(vis); sim.force('link').links(ls); sim.alpha(.3).restart();
+  panel(); save();
+}
+// 笔：听说过 / 熟悉 / 关注点一下就标上，同一支笔再点一次取消；清除把这个词的标记都去掉
+function hit(d){
+  if(mode==='k1'||mode==='k2'){const v=mode==='k1'?1:2; d.know=(d.know===v)?0:v}
+  else if(mode==='star') d.star=!d.star;
+  else if(mode==='clear'){d.know=0;d.star=false}
+  if(d.know||d.star) showUp(d.id);
+  d.cold=0; focus=d.id; render();
+}
+function showUp(id){let n=nodes.get(id),k=0;while(n&&k++<20){n.shown=true;n.folded=false;n.cold=0;n=n.parent&&nodes.get(n.parent)}}
+// 收缩：有标记的、你问的、领域、本次刚拓展出来的（连同上级）保留；其余每次拓展冷一级，1 变灰，2 收起
+function fold(fresh){
+  const keep=new Set();
+  for(const n of nodes.values()) if(n.shown&&(n.know||n.star||n.asked||n.kind==='d'||fresh.has(n.id))){let p=n;while(p&&!keep.has(p.id)){keep.add(p.id);p=p.parent&&nodes.get(p.parent)}}
+  let gray=0,gone=0;
+  for(const n of nodes.values()){ if(!n.shown) continue;
+    if(keep.has(n.id)){n.cold=0;continue}
+    n.cold=(n.cold||0)+1; if(n.cold>=2){n.shown=false;n.folded=true;gone++} else gray++; }
+  for(const n of nodes.values()) if(n.shown){let p=n.parent&&nodes.get(n.parent);while(p){if(!p.shown){n.shown=false;n.folded=true;gone++;break}p=p.parent&&nodes.get(p.parent)}}
+  return (gray||gone)?`；${gray?`${gray} 个没碰过的变灰`:''}${gray&&gone?'，':''}${gone?`${gone} 个收起了`:''}`:'';
+}
+function addNode(o){
+  const p=o.parent&&nodes.get(o.parent), id='ai'+(++seq);
+  const n={id,shown:true,know:0,star:false,...o,x:p?.x,y:p?.y};
+  nodes.set(id,n); if(p) links.push({s:p.id,t:id}); n.level=lvl(n); n.group=grp(n); if(n.shown) showUp(id); return n;
+}
+
+/* ---------- 右栏 ---------- */
+const $=id=>document.getElementById(id);
+function el(tag,attrs,text){const e=document.createElement(tag);Object.assign(e,attrs||{});if(text!=null)e.textContent=text;return e}
+function tag(text,color){const t=el('span',{className:'tag'},text);t.style.setProperty('--c',color);return t}
+function chip(k,onclick,title,extra){const b=el('button',{className:`chip k${k.know|0}`+(k.kind==='t'?' thing':'')+(extra?' '+extra:''),title:title||''},k.label); b.style.setProperty('--c',`var(--${k.group})`); b.onclick=onclick; return b}
+const SYM=['○ ','◐ ','● '];
+const openDom=new Set();
+function panel(){
+  for(const b of $('mode').children) b.setAttribute('aria-pressed',b.dataset.m===mode);
+  const n=nodes.get(focus), c=$('card'); c.replaceChildren();
+  if(n){
+    c.style.setProperty('--c',`var(--${n.group})`);
+    c.append(el('p',{className:'lbl'},'节点说明'));
+    const h=el('h2',null,n.label);
+    h.append(tag(KIND[n.kind],'var(--fg)'));
+    if(n.kind!=='d') h.append(tag(DOM[n.group],`var(--${n.group})`));
+    if(n.ai) h.append(tag('Claude 加的','var(--muted)'));
+    c.append(h); if(n.spec) c.append(el('p',{className:'spec'},n.spec)); c.append(el('p',{className:'d'},n.desc||''));
+    const path=[];let p=n;while(p.parent){p=nodes.get(p.parent);path.unshift(p.label)}
+    const ul=el('ul',{className:'rel'});
+    if(path.length) ul.append(el('li',null,'所在位置：'+path.join(' › ')));
+    if(n.src) ul.append(el('li',null,'你在这里碰到过：'+n.src));
+    for(const l of links) if(l.cross&&(l.s===n.id||l.t===n.id)){const o=nodes.get(l.s===n.id?l.t:l.s); if(!o?.shown) continue; const li=el('li');li.append(el('b',null,o.label+'：'),l.note||'相关');ul.append(li)}
+    if(ul.children.length) c.append(ul);
+    const seg=el('div',{className:'seg'});
+    KNOW.forEach((t,i)=>{const b=el('button',null,t); b.setAttribute('aria-pressed',(n.know|0)===i); b.onclick=()=>{n.know=i;n.cold=0;render()}; seg.append(b)});
+    c.append(seg);
+    const row=el('div',{className:'row'});
+    const sb=el('button',{className:'btn'},n.star?'★ 特别关注中':'☆ 特别关注'); sb.setAttribute('aria-pressed',!!n.star); sb.onclick=()=>{n.star=!n.star;render()};
+    const x=el('button',{className:'btn'},n.expanded?'再拓展一些':'拓展这个'); x.disabled=busy.size>0; x.onclick=()=>expand([n.id]);
+    row.append(sb,x); c.append(row);
+  }
+  const all=[...nodes.values()], stars=all.filter(n=>n.star), k1=all.filter(n=>n.know===1&&n.kind!=='d'), k2=all.filter(n=>n.know===2&&n.kind!=='d');
+  const m=$('marks'); m.replaceChildren();
+  for(const [title,list,emptyText] of [['★ 特别关注',stars,'还没有。选上面「★ 关注」，再点节点。'],['◐ 听说过·不太懂',k1,'还没有。'],['● 熟悉',k2,'还没有。']]){
+    const gp=el('div',{className:'grp'}); gp.append(el('h3',null,`${title}（${list.length}）`));
+    const ch=el('div',{className:'chips'});
+    if(!list.length) ch.append(el('span',{className:'empty'},emptyText));
+    for(const k of list.slice(0,60)) ch.append(chip(k,()=>{showUp(k.id);focus=k.id;render()},'查看说明'));
+    if(list.length>60) ch.append(el('span',{className:'empty'},`还有 ${list.length-60} 个，在下面的词条目录里看`));
+    gp.append(ch); m.append(gp);
+  }
+  const todo=stars.filter(n=>!n.expanded);
+  $('go').disabled=!todo.length||busy.size>0;
+  $('go').textContent=todo.length?`拓展特别关注（${todo.length} 个还没拓展）`:'特别关注都拓展过了';
+  catalog();
+  const shown=all.filter(n=>n.shown).length, folded=all.filter(n=>n.folded&&!n.shown).length;
+  $('count').textContent=`图上 ${shown} 个 · 熟悉 ${k2.length} · 听说过 ${k1.length} · 关注 ${stars.length}`;
+  $('unfold').hidden=!folded; $('unfold').textContent=`放回收起的 ${folded} 个`;
+}
+// 词条目录：每个领域一组，按上下级顺序排；有子节点的中间层加粗
+function catalog(){
+  const cd=$('cat'), kids=new Map();
+  for(const n of nodes.values()) if(n.parent){if(!kids.has(n.parent))kids.set(n.parent,[]);kids.get(n.parent).push(n)}
+  cd.replaceChildren();
+  for(const d of ORDER){
+    const list=[], walk=id=>{for(const k of kids.get(id)||[]){ if(k.kind!=='d'){list.push(k);walk(k.id)} }}; walk(d);
+    const det=el('details',{className:'dom'}); det.open=openDom.has(d); det.style.setProperty('--c',`var(--${d})`);
+    det.ontoggle=()=>{if(det.open===openDom.has(d)) return; det.open?openDom.add(d):openDom.delete(d); catalog()};
+    const sum=el('summary'); sum.append(el('i'),DOM[d],el('small',null,`熟悉 ${list.filter(n=>n.know===2).length} · 听说过 ${list.filter(n=>n.know===1).length} · 共 ${list.length}`));
+    det.append(sum);
+    const tools=el('div',{className:'tools'});
+    const b1=el('button',null,'没标的全标听说过'); b1.onclick=()=>{list.forEach(n=>{if(!n.know)n.know=1;showUp(n.id)});render()};
+    const b2=el('button',null,'全标熟悉'); b2.onclick=()=>{list.forEach(n=>{n.know=2;showUp(n.id)});render()};
+    const b3=el('button',null,'让 Claude 再给 20 个'); b3.onclick=()=>more(d); b3.disabled=busy.size>0;
+    tools.append(b1,b2); if(window.claude) tools.append(b3); det.append(tools);
+    const ch=el('div',{className:'chips'});
+    if(det.open) for(const k of list){const b=chip(k,()=>hit(k), (k.desc||'')+(k.src?`（${k.src}）`:''), kids.has(k.id)?'mid':'');
+      b.textContent=SYM[k.know|0]+(k.star?'★ ':'')+k.label; ch.append(b)}
+    det.append(ch); cd.append(det);
+  }
+}
+$('mode').onclick=e=>{const m=e.target.dataset?.m; if(m){mode=m;render()}};
+$('unfold').onclick=()=>{for(const n of nodes.values()) if(n.folded){n.shown=true;n.folded=false;n.cold=0} $('status').textContent='收起的节点都放回来了。'; render()};
+
+/* ---------- 搜索 ---------- */
+function search(q,submit){
+  const h=$('hits'); h.replaceChildren(); if(!q) return;
+  const low=q.toLowerCase(), ns=[...nodes.values()].filter(n=>n.label.toLowerCase().includes(low)).slice(0,10);
+  const go=n=>{showUp(n.id);focus=n.id;$('q').value='';h.replaceChildren();render()};
+  if(submit&&ns.length) return go(ns[0]);
+  for(const n of ns) h.append(chip(n,()=>go(n),n.shown?'在图上':'点一下放到图上'));
+  if(ns.length) return;
+  if(!submit){h.append(el('span',{className:'empty'},`图里没有「${q}」，按回车让 Claude 把它放到合适的位置。`));return}
+  askAdd(q);
+}
+$('q').oninput=()=>search($('q').value.trim());
+$('find').onsubmit=e=>{e.preventDefault();search($('q').value.trim(),true)};
+
+/* ---------- 让 Claude 帮忙 ---------- */
+let sample=null, ctl=null, dl=null;
+window.claude?.use?.('sample').then(s=>{sample=s}).catch(()=>{});
+window.claude?.use?.('downloads').then(d=>{dl=d}).catch(()=>{});
+const ERR={not_granted:'没有允许本页使用 Claude，所以只能用网页里自带的词条。',sampling_disabled:'你的账号暂时不能在网页里调用 Claude。',
+  rate_limited:'调用太频繁或额度用完了，过一会再试。',session_expired:'登录过期了，刷新页面重新登录。',
+  invalid_json:'Claude 回的格式不对，再点一次试试。',refused:'Claude 拒绝了这次请求，换个说法试试。'};
+const noClaude=()=>window.claude?'要允许本页使用 Claude 后才能用这个功能。':'这个功能要用到 Claude，只在 claude.ai 上的版本里能用；这里可以用自带的词条。';
+function marksText(){const a=[...nodes.values()], nm=f=>a.filter(f).map(n=>n.label).join('、')||'无';
+  return `这个人的背景：${PROFILE}
+他熟悉的：${nm(n=>n.know===2&&n.kind!=='d')}
+他听说过但不太懂的：${nm(n=>n.know===1&&n.kind!=='d')}
+他特别关注的：${nm(n=>n.star)}`}
+const kindOf=s=>String(s).includes('具体')?'t':'c';
+const findLabel=s=>[...nodes.values()].find(n=>n.label===String(s));
+
+async function expand(want){
+  const local=[], remote=[], fresh=new Set(want);
+  for(const id of want){
+    showUp(id);
+    const kids=[...nodes.values()].filter(n=>n.parent===id&&!n.shown);
+    const preset=kids.some(k=>!k.folded);
+    kids.forEach(k=>{showUp(k.id);fresh.add(k.id)});
+    if(preset||kids.length&&!sample){nodes.get(id).expanded=true;local.push(id)} else remote.push(id);
+  }
+  if(!remote.length){ $('status').textContent=`展开了 ${local.length} 个节点的现成内容`+fold(fresh)+'。'; return render(); }
+  if(!sample){ $('status').textContent=(local.length?'现成内容已展开；':'')+`「${remote.map(i=>nodes.get(i).label).join('、')}」没有现成内容，`+noClaude()+fold(fresh).replace('；',' '); return render(); }
+  remote.forEach(id=>busy.add(id)); render();
+  $('status').textContent='Claude 正在想…'; $('stop').hidden=false; ctl=new AbortController();
+  try{
+    const items=remote.map(id=>{const n=nodes.get(id);const path=[];let p=n;while(p.parent){p=nodes.get(p.parent);path.unshift(p.label)}
+      return `- 「${n.label}」（${KIND[n.kind]}，位置：${[...path,n.label].join(' › ')}）：${n.desc||''}`}).join('\n');
+    const list=await sample.json(`你在帮一个人往下扩展他的中文个人知识图谱。图谱分三级：领域 > 概念/技术（原理、协议、方法、标准）> 具体东西（具体芯片、产品、软件、工具）。
+${marksText()}
+
+要拓展的节点：
+${items}
+
+图里已有这些节点，不要重复：${[...nodes.values()].map(n=>n.label).join('、')}
+
+为每个要拓展的节点给出 4 个最值得他接着了解的下一级内容；必须比父节点更小、更具体。他熟悉的方向少给基础词，多给进阶词；他不太懂的方向先给入门必备的词。
+kind 写「概念」或「具体东西」；desc 大白话一句，不超过 45 个汉字；spec 写一个短的规格、数字或例子（没有就空字符串）；related 写 0-2 个已有节点名（原样照抄）。
+只回复一个 JSON 数组，每项形如：
+{"parent":"LoRa","label":"扩频因子 SF","kind":"概念","desc":"数字越大传得越远，但越慢越费电。","spec":"SF7–SF12","related":["LoRaWAN"]}`,{signal:ctl.signal,modelTier:'quick',cache:false});
+    let added=0;
+    for(const it of Array.isArray(list)?list:[]){
+      const par=remote.find(id=>nodes.get(id).label===String(it.parent))||(remote.length===1?remote[0]:null);
+      const label=String(it.label||'').trim().slice(0,30); if(!par||!label) continue;
+      const dup=findLabel(label);
+      if(dup){ if(!links.some(l=>(l.s===par&&l.t===dup.id)||(l.t===par&&l.s===dup.id))) links.push({s:par,t:dup.id,cross:1,ai:1,note:'Claude 认为两者相关'}); showUp(dup.id); fresh.add(dup.id); continue; }
+      const n=addNode({label,parent:par,kind:kindOf(it.kind),desc:String(it.desc||'').slice(0,120),spec:String(it.spec||'').slice(0,60),ai:1});
+      fresh.add(n.id); added++;
+      for(const r of (Array.isArray(it.related)?it.related:[]).slice(0,2)){const o=findLabel(r); if(o&&o.id!==par) links.push({s:n.id,t:o.id,cross:1,ai:1,note:'Claude 认为两者相关'})}
+    }
+    remote.forEach(id=>nodes.get(id).expanded=true);
+    $('status').textContent=`新增 ${added} 个节点${local.length?'，另展开了现成内容':''}`+fold(fresh)+'。你的标记都还在。';
+  }catch(e){
+    $('status').textContent=e.code==='cancelled'?'已停止。':(ERR[e.code]||'出错了，稍后再点一次。');
+    if(e.code==='not_granted'||e.code==='sampling_disabled') sample=null;
+  }finally{ busy.clear(); $('stop').hidden=true; render(); }
+}
+// 某个领域再要 20 个候选词：只进词条目录，不上图，等你标了才上图
+async function more(d){
+  if(!sample){$('status').textContent=noClaude();return}
+  const inDom=[...nodes.values()].filter(n=>n.group===d);
+  $('status').textContent=`Claude 正在给「${DOM[d]}」找更多词…`; busy.add(d); panel();
+  try{
+    const list=await sample.json(`你在帮一个人回忆他可能听说过的概念，用来补全他的中文个人知识图谱。图谱分三级：领域 > 概念/技术 > 具体东西。
+${marksText()}
+
+这次只看领域「${DOM[d]}」。这个领域里已有：${inDom.map(n=>n.label).join('、')}
+整张图里已有（不要重复，同义也算重复）：${[...nodes.values()].map(n=>n.label).join('、')}
+
+再给 20 个这个领域里他很可能听说过、但图里还没有的词，从常见到进阶都要有。每个词挂到这个领域里最贴切的已有节点下面（parent 原样照抄已有名字，可以是「${DOM[d]}」本身）。
+kind 写「概念」或「具体东西」；desc 大白话一句，不超过 30 个汉字。
+只回复一个 JSON 数组，每项形如：{"label":"……","parent":"……","kind":"概念","desc":"……"}`,{modelTier:'quick',cache:false});
+    let added=0;
+    for(const it of Array.isArray(list)?list:[]){
+      const label=String(it.label||'').trim().slice(0,30); if(!label||findLabel(label)) continue;
+      const par=inDom.find(n=>n.label===String(it.parent))||nodes.get(d);
+      addNode({label,parent:par.id,kind:kindOf(it.kind),desc:String(it.desc||'').slice(0,120),ai:1,shown:false}); added++;
+    }
+    openDom.add(d);
+    $('status').textContent=`「${DOM[d]}」新加了 ${added} 个候选词，在词条目录里，标了才会上图。`;
+  }catch(e){ $('status').textContent=ERR[e.code]||'出错了，稍后再试。'; if(e.code==='not_granted'||e.code==='sampling_disabled') sample=null; }
+  busy.delete(d); render();
+}
+async function askAdd(q){
+  if(!sample){$('status').textContent=`图里没有「${q}」。`+noClaude();return}
+  $('status').textContent=`Claude 正在给「${q}」找位置…`;
+  const all=[...nodes.values()];
+  try{
+    const it=await sample.json(`下面是一张中文知识图谱里已有的节点，括号里是分级（领域 > 概念/技术 > 具体东西）：
+${all.map(n=>`${n.label}（${KIND[n.kind]}）`).join('、')}
+
+用户想把「${q}」加进去。判断它是「概念」（技术、原理、协议、方法、标准）还是「具体东西」（具体芯片、产品、软件、工具），从已有节点里挑一个最贴切、比它大一级的当父节点（原样照抄已有节点名）。
+desc 大白话一句，不超过 45 个汉字；spec 写一个短的规格、数字或例子，没有就空字符串。用户输入有错别字或是简称时，label 写规范叫法。
+只回复一个 JSON 对象，形如：{"label":"Zigbee","parent":"无线通信","kind":"概念","desc":"……","spec":"2.4 GHz · 自组网"}`,{modelTier:'quick',cache:false});
+    const label=String(it?.label||q).trim().slice(0,30);
+    const dup=findLabel(label);
+    if(dup){showUp(dup.id);focus=dup.id;$('status').textContent=`「${label}」本来就在图里。`;return render()}
+    const par=findLabel(it?.parent)||nodes.get('iot');
+    const n=addNode({label,parent:par.id,kind:kindOf(it?.kind),desc:String(it?.desc||'').slice(0,120),spec:String(it?.spec||'').slice(0,60),ai:1,know:1});
+    focus=n.id; $('q').value=''; $('hits').replaceChildren();
+    $('status').textContent=`已把「${label}」放到「${par.label}」下面，先标成听说过。`;
+  }catch(e){ $('status').textContent=ERR[e.code]||'出错了，稍后再试。'; if(e.code==='not_granted'||e.code==='sampling_disabled') sample=null; }
+  render();
+}
+$('go').onclick=()=>expand([...nodes.values()].filter(n=>n.star&&!n.expanded).map(n=>n.id));
+$('stop').onclick=()=>ctl?.abort();
+
+/* ---------- 导出 / 导入 / 清空 ---------- */
+$('export').onclick=async()=>{
+  const data=JSON.stringify({...snapshot(),t:Date.now(),app:'kg-iot'});
+  const name=`knowledge-graph-${new Date().toISOString().slice(0,10)}.json`;
+  if(dl){ try{const r=await dl.save({filename:name,data}); setSync(r.status==='saved'?'已导出 '+name:'已交给系统保存')}catch(e){setSync('没有导出')} return; }
+  if(window.claude){ setSync('这里暂时不能下载文件'); return; }
+  const a=el('a',{href:URL.createObjectURL(new Blob([data],{type:'application/json'})),download:name}); document.body.append(a); a.click(); a.remove(); setSync('已导出 '+name);
+};
+$('import').onclick=()=>$('file').click();
+$('file').onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  try{ const o=JSON.parse(await f.text()); if(!o||typeof o!=='object'||!(o.n)) throw 0; mergeIn(o); redraw(); setSync('已合并导入的标记（只加不减）'); }
+  catch(_){ setSync('这个文件不是本图谱导出的 JSON'); }
+};
+let armT=0;
+$('reset').onclick=()=>{
+  const b=$('reset');
+  if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent='会清空所有标记，再点一次确认'; clearTimeout(armT);
+    armT=setTimeout(()=>{b.classList.remove('armed');b.textContent='恢复初始图谱'},4000); return; }
+  clearTimeout(armT); b.classList.remove('armed'); b.textContent='恢复初始图谱';
+  build(null); $('status').textContent='已恢复初始图谱。'; redraw();
+};
+
+const lg=$('legend'), row1=el('div'), row2=el('div');
+row1.append(...ORDER.concat([]).map(k=>{const s=el('span');s.style.setProperty('--c',`var(--${k})`);s.append(el('i'),DOM[k]);return s}));
+for(const [cls,txt] of [['big','领域'],['ci','概念'],['sq','具体东西'],['k0','没听过'],['k1','听说过'],['','熟悉'],['ring','关注']]){const s=el('span');s.style.setProperty('--c','var(--muted)');s.append(el('i',{className:cls}),txt);row2.append(s)}
+lg.append(row1,row2);
+render();
+</script>
+</body></html>
