@@ -123,11 +123,11 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--wireless);out
   <div class="stage" id="stage">
     <svg id="g" aria-label="知识图谱"></svg>
     <div class="legend" id="legend"></div>
-    <div class="hint">用「只看说明」点节点＝只看那一块 · 点空白处回总览 · 拖动、滚轮缩放</div>
+    <div class="hint">点节点＝看它周围（下面没词会自动拓展）· 点空白处回总览 · 拖动、滚轮缩放</div>
   </div>
   <aside>
     <section class="penbar">
-      <p class="lbl">笔：选好后点图上的节点或目录里的词，点一下就标上；同一支笔再点一次＝取消</p>
+      <p class="lbl">笔：点目录里的词＝标上，再点一次＝取消；点图上的节点＝进入它并标上，中间那个再点一次＝取消</p>
       <div class="seg" id="mode">
         <button data-m="view">只看说明</button><button data-m="k1">◐ 听说过</button><button data-m="k2">● 熟悉</button><button data-m="star">★ 关注</button><button data-m="clear">清除</button>
       </div>
@@ -153,7 +153,7 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--wireless);out
       <p class="status" id="status"></p>
     </section>
     <section>
-      <p class="lbl">词条目录：用上面的笔一个个点过去；选「只看说明」时点词条只看说明</p>
+      <p class="lbl">词条目录：用上面的笔一个个点过去；选「只看说明」时点词条＝在图上看它</p>
       <div id="cat"></div>
     </section>
     <div class="foot">
@@ -1507,7 +1507,7 @@ new ResizeObserver(fit).observe(document.getElementById('stage')); fit();
 function redraw(){nodeG.selectAll('*').remove();linkG.selectAll('*').remove();render()}
 
 // 只看点到的部分：领域常在；点到的词连同往上的路径；它的下一层（标过的实色，没标的淡色）；
-// 下一层里标过的再往下一层，合计超过 MAXV 个就不放。whole=true 时回到老办法（显示所有上过图的）
+// 下一层里标过的再往下一层，合计超过 MAXV 个就不放；再加相关词，最末一层的词带上同级。whole=true 时回到老办法（显示所有上过图的）
 let center=null, whole=false, hot=new Set(), nVis=0;
 const MAXV=45;
 function viewSet(){
@@ -1518,7 +1518,9 @@ function viewSet(){
   const v=new Set(all.filter(n=>n.kind==='d').map(n=>n.id));
   for(let p=nodes.get(center);p;p=p.parent&&nodes.get(p.parent)) v.add(p.id);
   if(center){ const r1=kids(center), r2=r1.filter(n=>hot.has(n.id)).flatMap(n=>kids(n.id));
-    r1.forEach(n=>v.add(n.id)); if(r1.length+r2.length<=MAXV) r2.forEach(n=>v.add(n.id)); }
+    r1.forEach(n=>v.add(n.id)); if(r1.length+r2.length<=MAXV) r2.forEach(n=>v.add(n.id));
+    for(const l of links) if(l.cross&&(l.s===center||l.t===center)) v.add(l.s===center?l.t:l.s);  // 相关词
+    const c=nodes.get(center); if(!r1.length&&c.parent) kids(c.parent).forEach(n=>v.add(n.id)); }  // 最末一层：带上同级
   return all.filter(n=>v.has(n.id));
 }
 const goTo=id=>{center=id;focus=id};
@@ -1545,14 +1547,22 @@ function render(){
   sim.nodes(vis); sim.force('link').links(ls); sim.alpha(.3).restart();
   panel(); save();
 }
-// 笔：听说过 / 熟悉 / 关注点一下就标上，同一支笔再点一次取消；清除把这个词的标记都去掉
-function hit(d){
-  if(mode==='view'||d.kind==='d'){goTo(d.id);return render()}
-  if(mode==='k1'||mode==='k2'){const v=mode==='k1'?1:2; d.know=(d.know===v)?0:v}
-  else if(mode==='star') d.star=!d.star;
+// 笔：听说过 / 熟悉 / 关注 标上；toggle=true 时同一支笔再点一次取消；清除把这个词的标记都去掉
+function pen(d,toggle){
+  if(mode==='view'||d.kind==='d') return;
+  if(mode==='k1'||mode==='k2'){const v=mode==='k1'?1:2; d.know=(toggle&&d.know===v)?0:v}
+  else if(mode==='star') d.star=toggle?!d.star:true;
   else if(mode==='clear'){d.know=0;d.star=false}
   if(d.know||d.star) showUp(d.id);
-  d.cold=0; focus=d.id; render();
+  d.cold=0;
+}
+// 目录里：点一下标上，再点一次取消；「只看说明」笔＝在图上进入这个词
+function mark(d){ pen(d,true); if(mode==='view'||d.kind==='d') goTo(d.id); else focus=d.id; render() }
+// 图上：点一下＝进入这个词（拿着标记笔顺便标上）；中间那个再点一次＝取消标记。
+// 进入的词下面没东西、也没拓展过，就自动让 Claude 往下拓展
+function hit(d){
+  const again=d.id===center; pen(d,again); goTo(d.id); render();
+  if(!again&&d.kind!=='d'&&!d.expanded&&sample&&!busy.size&&![...nodes.values()].some(n=>n.parent===d.id)) expand([d.id]);
 }
 function showUp(id){let n=nodes.get(id),k=0;while(n&&k++<20){n.shown=true;n.folded=false;n.cold=0;n=n.parent&&nodes.get(n.parent)}}
 // 收缩：有标记的、你问的、领域、本次刚拓展出来的（连同上级）保留；其余每次拓展冷一级，1 变灰，2 收起
@@ -1642,7 +1652,7 @@ function catalog(){
     const b3=el('button',null,'让 Claude 再给 20 个'); b3.onclick=()=>more(d); b3.disabled=busy.size>0;
     tools.append(b1,b2); if(window.claude) tools.append(b3); det.append(tools);
     const ch=el('div',{className:'chips'});
-    if(det.open) for(const k of list){const b=chip(k,()=>hit(k), (k.desc||'')+(k.src?`（${k.src}）`:''), kids.has(k.id)?'mid':'');
+    if(det.open) for(const k of list){const b=chip(k,()=>mark(k), (k.desc||'')+(k.src?`（${k.src}）`:''), kids.has(k.id)?'mid':'');
       b.textContent=SYM[k.know|0]+(k.star?'★ ':'')+(isNew(k)?'🆕':'')+k.label; ch.append(b)}
     det.append(ch); cd.append(det);
   }
