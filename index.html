@@ -123,7 +123,7 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--wireless);out
   <div class="stage" id="stage">
     <svg id="g" aria-label="知识图谱"></svg>
     <div class="legend" id="legend"></div>
-    <div class="hint">点节点＝看它周围（下面没词会自动拓展）· 点空白处回总览 · 拖动、滚轮缩放</div>
+    <div class="hint">标过的词常在 · 点节点＝展开往下两层（下面没词会自动拓展）· 点空白处回总览 · 拖动、滚轮缩放</div>
   </div>
   <aside>
     <section class="penbar">
@@ -1491,7 +1491,8 @@ if(!window.claude&&!lsGet(LS)&&!lsGet('kg-iot-v1')) fetch('graph.json').then(r=>
 
 /* ---------- 图 ---------- */
 const svg=d3.select('#g'), root=svg.append('g'), linkG=root.append('g'), nodeG=root.append('g');
-svg.call(d3.zoom().scaleExtent([.15,3]).on('zoom',e=>root.attr('transform',e.transform))).on('dblclick.zoom',null);
+const zoom=d3.zoom().scaleExtent([.15,3]).on('zoom',e=>root.attr('transform',e.transform));
+svg.call(zoom).on('dblclick.zoom',null);
 const R=n=>n.kind==='d'?(n.id==='iot'?26:20):n.kind==='t'?(n.asked?15:8):(n.asked?17:10);
 const sim=d3.forceSimulation()
   .force('link',d3.forceLink().id(d=>d.id).distance(l=>l.cross?200:l.target.kind==='d'||l.target.asked?140:95).strength(l=>l.cross?.03:.6))
@@ -1506,19 +1507,18 @@ const fit=()=>{const r=document.getElementById('stage').getBoundingClientRect();
 new ResizeObserver(fit).observe(document.getElementById('stage')); fit();
 function redraw(){nodeG.selectAll('*').remove();linkG.selectAll('*').remove();render()}
 
-// 只看点到的部分：领域常在；点到的词连同往上的路径；它的下一层（标过的实色，没标的淡色）；
-// 下一层里标过的再往下一层，合计超过 MAXV 个就不放；再加相关词，最末一层的词带上同级。whole=true 时回到老办法（显示所有上过图的）
+// 图上显示：领域 + 你标过的词（听说过/熟悉/关注，连同上级）常在；点到的词再展开往下两层（没标的淡色），
+// 加上相关词，最末一层的词带上同级。whole=true 时回到老办法（显示所有上过图的）
 let center=null, whole=false, hot=new Set(), nVis=0;
-const MAXV=45;
 function viewSet(){
   const all=[...nodes.values()];
   hot=new Set(); for(const n of all) if(n.know||n.star){let p=n;while(p&&!hot.has(p.id)){hot.add(p.id);p=p.parent&&nodes.get(p.parent)}}
   if(whole) return all.filter(n=>n.shown);
   const kids=id=>all.filter(n=>n.parent===id);
-  const v=new Set(all.filter(n=>n.kind==='d').map(n=>n.id));
+  const v=new Set(all.filter(n=>n.kind==='d'||hot.has(n.id)).map(n=>n.id));
   for(let p=nodes.get(center);p;p=p.parent&&nodes.get(p.parent)) v.add(p.id);
-  if(center){ const r1=kids(center), r2=r1.filter(n=>hot.has(n.id)).flatMap(n=>kids(n.id));
-    r1.forEach(n=>v.add(n.id)); if(r1.length+r2.length<=MAXV) r2.forEach(n=>v.add(n.id));
+  if(center){ const r1=kids(center);
+    for(const n of r1){v.add(n.id); kids(n.id).forEach(m=>v.add(m.id))}
     for(const l of links) if(l.cross&&(l.s===center||l.t===center)) v.add(l.s===center?l.t:l.s);  // 相关词
     const c=nodes.get(center); if(!r1.length&&c.parent) kids(c.parent).forEach(n=>v.add(n.id)); }  // 最末一层：带上同级
   return all.filter(n=>v.has(n.id));
@@ -1562,6 +1562,7 @@ function mark(d){ pen(d,true); if(mode==='view'||d.kind==='d') goTo(d.id); else 
 // 进入的词下面没东西、也没拓展过，就自动让 Claude 往下拓展
 function hit(d){
   const again=d.id===center; pen(d,again); goTo(d.id); render();
+  svg.transition().duration(500).call(zoom.translateTo,d.x,d.y);  // 镜头移到点的词，展开的词就在它周围
   if(!again&&d.kind!=='d'&&!d.expanded&&sample&&!busy.size&&![...nodes.values()].some(n=>n.parent===d.id)) expand([d.id]);
 }
 function showUp(id){let n=nodes.get(id),k=0;while(n&&k++<20){n.shown=true;n.folded=false;n.cold=0;n=n.parent&&nodes.get(n.parent)}}
