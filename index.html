@@ -2597,17 +2597,26 @@ const svg=d3.select('#g'), root=svg.append('g'), linkG=root.append('g'), nodeG=r
 const zoom=d3.zoom().scaleExtent([.15,3]).on('zoom',e=>root.attr('transform',e.transform));
 svg.call(zoom).on('dblclick.zoom',null);
 const R=n=>n.kind==='d'?(n.id==='iot'?26:20):n.kind==='t'?(n.asked?15:8):(n.asked?17:10);
+// 九个领域围成一圈，各占一块，词往自己的领域靠
+const ANG=g=>ORDER.indexOf(g)/ORDER.length*2*Math.PI-Math.PI/2, RING=520;
+const AX=g=>RING*Math.cos(ANG(g)), AY=g=>RING*Math.sin(ANG(g));
 const sim=d3.forceSimulation()
   .force('link',d3.forceLink().id(d=>d.id).distance(l=>l.cross?200:l.target.kind==='d'||l.target.asked?140:95).strength(l=>l.cross?.03:.6))
-  .force('charge',d3.forceManyBody().strength(-650))
+  .force('charge',d3.forceManyBody().strength(-650).distanceMax(250))  // 只推开附近的，远处不再互相推，图更紧凑
   .force('collide',d3.forceCollide(d=>R(d)+30))
-  .force('x',d3.forceX().strength(.04)).force('y',d3.forceY().strength(.04))
+  .force('x',d3.forceX(d=>AX(d.group)).strength(.06)).force('y',d3.forceY(d=>AY(d.group)).strength(.06))
   .on('tick',()=>{
     linkG.selectAll('line').attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
     nodeG.selectAll('g.n').attr('transform',d=>`translate(${d.x},${d.y})`);
   });
 const fit=()=>{const r=document.getElementById('stage').getBoundingClientRect();svg.attr('viewBox',[-r.width/2,-r.height/2,r.width,r.height])};
 new ResizeObserver(fit).observe(document.getElementById('stage')); fit();
+function fitAll(vis){
+  const r=document.getElementById('stage').getBoundingClientRect(); if(!vis.length||!r.width) return;
+  const xs=vis.map(n=>n.x), ys=vis.map(n=>n.y), x0=Math.min(...xs)-40, x1=Math.max(...xs)+40, y0=Math.min(...ys)-40, y1=Math.max(...ys)+60;
+  const k=Math.max(.15,Math.min(1,r.width/(x1-x0),r.height/(y1-y0)));
+  svg.call(zoom.transform,d3.zoomIdentity.scale(k).translate(-(x0+x1)/2,-(y0+y1)/2));
+}
 function redraw(){nodeG.selectAll('*').remove();linkG.selectAll('*').remove();render()}
 
 // 图上显示：领域 + 你标过的词（听说过/熟悉/关注，连同上级）常在；点到的词再展开往下两层（没标的淡色），
@@ -2648,7 +2657,14 @@ function render(){
   g.attr('class',d=>`n k${d.know|0}${d.kind==='d'?' domain':''}${d.star?' star':''}${d.asked?' asked':''}${d.id===focus?' focus':''}${busy.has(d.id)?' busy':''}${cold(d.id)?' cold':''}${dim(d.id)?' dim':''}${d.id===center?' center':''}`)
    .attr('style',d=>`--c:var(--${d.group})`).attr('aria-label',d=>d.label+'，'+KNOW[d.know|0]);
   g.select('text').text(d=>(d.star?'★ ':'')+d.label);
-  sim.nodes(vis); sim.force('link').links(ls); sim.alpha(.3).restart();
+  // 新上图的词放在上级旁边（没有上级位置就放在领域那一块），不从正中间飞出来
+  let fresh=0; const j=()=>(Math.random()-.5)*80;
+  for(const n of vis) if(n.x==null){fresh++; const p=n.parent&&nodes.get(n.parent);
+    if(p&&p.x!=null){n.x=p.x+j();n.y=p.y+j()} else {n.x=AX(n.group)+3*j();n.y=AY(n.group)+3*j()}}
+  sim.nodes(vis); sim.force('link').links(ls);
+  // 刚打开或重新载入（大半节点没位置）：先在后台整理好，再缩放到正好装下
+  const settle=fresh>vis.length/3; if(settle){sim.alpha(1); sim.tick(300); fitAll(vis)}
+  sim.alpha(settle?.05:.3).restart();
   panel(); save();
 }
 // 笔：听说过 / 熟悉 / 关注 标上；toggle=true 时同一支笔再点一次取消；清除把这个词的标记都去掉
